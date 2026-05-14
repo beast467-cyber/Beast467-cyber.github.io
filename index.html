@@ -1,0 +1,596 @@
+html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌊 Discord Event Schedule</title>
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --accent: #38bdf8;
+            --accent-glow: rgba(56, 189, 248, 0.3);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            min-height: 100vh;
+            color: var(--text-primary);
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            transition: background-image 0.8s ease;
+        }
+
+        .bg-ocean { background-image: linear-gradient(rgba(0,20,40,0.7), rgba(0,20,40,0.8)), url('https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=1920&q=80'); }
+        .bg-sunset { background-image: linear-gradient(rgba(40,20,0,0.6), rgba(40,20,0,0.7)), url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=80'); }
+        .bg-night { background-image: linear-gradient(rgba(10,10,30,0.8), rgba(10,10,30,0.9)), url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=1920&q=80'); }
+        .bg-aurora { background-image: linear-gradient(rgba(0,30,20,0.6), rgba(0,30,20,0.7)), url('https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=1920&q=80'); }
+        .bg-storm { background-image: linear-gradient(rgba(20,20,30,0.75), rgba(20,20,30,0.85)), url('https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=1920&q=80'); }
+
+        /* ===== TOP BAR (prevents overlap) ===== */
+        .top-bar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            padding: 16px 20px;
+            pointer-events: none;
+        }
+        .top-bar > * { pointer-events: auto; }
+
+        /* Background selector - LEFT */
+        .bg-selector {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 10px;
+            display: flex;
+            gap: 8px;
+        }
+        .bg-option {
+            width: 36px; height: 36px;
+            border-radius: 10px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+        .bg-option:hover { transform: scale(1.15); }
+        .bg-option.active { border-color: var(--accent); box-shadow: 0 0 12px var(--accent-glow); }
+        .bg-ocean-opt { background: linear-gradient(135deg, #1e3a5f, #0d2137); }
+        .bg-sunset-opt { background: linear-gradient(135deg, #c2410c, #7c2d12); }
+        .bg-night-opt { background: linear-gradient(135deg, #1e1b4b, #312e81); }
+        .bg-aurora-opt { background: linear-gradient(135deg, #064e3b, #065f46); }
+        .bg-storm-opt { background: linear-gradient(135deg, #374151, #1f2937); }
+
+        /* Audio control - RIGHT */
+        .audio-control {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 50px;
+            padding: 10px 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+            flex-shrink: 0;
+            position: relative;
+        }
+        .audio-control:hover { background: rgba(255,255,255,0.15); transform: scale(1.05); }
+        .audio-control.playing { border-color: var(--accent); box-shadow: 0 0 20px var(--accent-glow); }
+        .audio-icon { font-size: 1.3rem; }
+        .audio-label { font-size: 0.85rem; font-weight: 500; white-space: nowrap; }
+        .volume-slider {
+            width: 70px; height: 4px;
+            -webkit-appearance: none;
+            background: rgba(255,255,255,0.2);
+            border-radius: 2px;
+            outline: none;
+        }
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px; height: 14px;
+            background: var(--accent);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        /* Mute indicator (green dot) */
+        .mute-indicator {
+            position: absolute;
+            top: -3px;
+            right: -3px;
+            width: 10px;
+            height: 10px;
+            background: #22c55e;
+            border-radius: 50%;
+            border: 2px solid rgba(0,0,0,0.5);
+            display: none;
+            box-shadow: 0 0 6px rgba(34, 197, 94, 0.6);
+        }
+        .mute-indicator.active { display: block; }
+
+        /* Audio source panel - RIGHT, below control */
+        .audio-source-panel {
+            position: fixed;
+            top: 72px;
+            right: 20px;
+            z-index: 999;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 16px;
+            width: 320px;
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .audio-source-panel.open { display: flex; }
+        .audio-source-panel h3 { font-size: 0.95rem; margin-bottom: 4px; }
+        .audio-source-panel p { font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4; }
+        .audio-source-panel input {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid var(--glass-border);
+            background: rgba(0,0,0,0.3);
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            outline: none;
+        }
+        .audio-source-panel input:focus { border-color: var(--accent); }
+        .audio-source-panel .btn-row { display: flex; gap: 8px; }
+        .audio-source-panel button {
+            flex: 1;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+            background: rgba(255,255,255,0.1);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+        .audio-source-panel button:hover { background: rgba(255,255,255,0.2); }
+        .audio-source-panel button.primary {
+            background: var(--accent);
+            color: #0f172a;
+            border-color: var(--accent);
+            font-weight: 600;
+        }
+        .audio-source-panel button.primary:hover { opacity: 0.9; }
+
+        /* Main container & cards (fully functional) */
+        .container { max-width: 900px; margin: 0 auto; padding: 100px 20px 40px; }
+
+        .header { text-align: center; margin-bottom: 40px; }
+        .header h1 {
+            font-size: 2.8rem; font-weight: 800;
+            background: linear-gradient(135deg, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+        .header p { color: var(--text-secondary); font-size: 1.1rem; }
+        .timezone-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            margin-top: 12px;
+            backdrop-filter: blur(10px);
+        }
+
+        .events-grid { display: flex; flex-direction: column; gap: 20px; }
+        .day-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 28px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .day-card::before {
+            content: ''; position: absolute;
+            top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, var(--accent), #818cf8);
+            opacity: 0; transition: opacity 0.3s ease;
+        }
+        .day-card:hover::before { opacity: 1; }
+        .day-card:hover { transform: translateY(-2px); box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+
+        .day-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+        .day-icon { font-size: 2rem; }
+        .day-title { font-size: 1.5rem; font-weight: 700; }
+        .day-badge {
+            margin-left: auto;
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .badge-live { background: rgba(34, 197, 94, 0.2); color: #4ade80; animation: pulse 2s infinite; }
+        .badge-soon { background: rgba(234, 179, 8, 0.2); color: #facc15; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+        .event-slots { display: flex; flex-direction: column; gap: 12px; }
+        .event-slot {
+            background: rgba(0,0,0,0.2);
+            border-radius: 14px;
+            padding: 18px 20px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 16px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .event-slot:hover { background: rgba(0,0,0,0.3); border-color: rgba(255,255,255,0.1); }
+        .slot-time { font-size: 1.3rem; font-weight: 700; font-variant-numeric: tabular-nums; min-width: 180px; }
+        .slot-utc { font-size: 0.85rem; color: var(--text-secondary); font-weight: 500; }
+        .slot-discord {
+            margin-left: auto;
+            background: rgba(88, 101, 242, 0.2);
+            border: 1px solid rgba(88, 101, 242, 0.3);
+            color: #a5b4fc;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: all;
+        }
+        .slot-discord:hover { background: rgba(88, 101, 242, 0.3); color: #c7d2fe; }
+        .slot-discord.copied { background: rgba(34, 197, 94, 0.2); border-color: rgba(34, 197, 94, 0.3); color: #4ade80; }
+        .slot-status { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; }
+        .status-ongoing { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
+        .status-upcoming { background: rgba(56, 189, 248, 0.15); color: #38bdf8; }
+        .status-ended { background: rgba(148, 163, 184, 0.15); color: #94a3b8; }
+
+        .countdown {
+            text-align: center; margin-top: 40px;
+            padding: 24px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+        }
+        .countdown-label { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 8px; }
+        .countdown-time { font-size: 2rem; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--accent); }
+
+        .footer { text-align: center; margin-top: 40px; padding: 20px; color: var(--text-secondary); font-size: 0.85rem; }
+
+        @media (max-width: 600px) {
+            .header h1 { font-size: 2rem; }
+            .day-card { padding: 20px; }
+            .slot-time { font-size: 1.1rem; min-width: auto; }
+            .slot-discord { margin-left: 0; width: 100%; text-align: center; }
+            .top-bar { padding: 12px 14px; }
+            .audio-control { padding: 8px 14px; gap: 8px; }
+            .audio-label { display: none; }
+            .volume-slider { width: 50px; }
+            .bg-option { width: 30px; height: 30px; }
+            .audio-source-panel { width: calc(100vw - 28px); right: 14px; top: 64px; }
+        }
+
+        .wave-container {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            height: 60px; overflow: hidden; pointer-events: none; z-index: -1; opacity: 0.3;
+        }
+        .wave {
+            position: absolute; bottom: 0; left: 0; width: 200%; height: 100%;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%23ffffff' fill-opacity='0.1' d='M0,192L48,197.3C96,203,192,213,288,229.3C384,245,480,267,576,250.7C672,235,768,181,864,181.3C960,181,1056,235,1152,234.7C1248,235,1344,181,1392,154.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E");
+            background-size: 50% 100%;
+            animation: wave 15s linear infinite;
+        }
+        @keyframes wave { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+    </style>
+</head>
+<body class="bg-ocean">
+    <div class="top-bar">
+        <!-- Background selector (left) -->
+        <div class="bg-selector">
+            <div class="bg-option bg-ocean-opt active" onclick="setBg('ocean')" title="Ocean"></div>
+            <div class="bg-option bg-sunset-opt" onclick="setBg('sunset')" title="Sunset"></div>
+            <div class="bg-option bg-night-opt" onclick="setBg('night')" title="Night"></div>
+            <div class="bg-option bg-aurora-opt" onclick="setBg('aurora')" title="Aurora"></div>
+            <div class="bg-option bg-storm-opt" onclick="setBg('storm')" title="Storm"></div>
+        </div>
+
+        <!-- Audio control (right) -->
+        <div class="audio-control" id="audioControl" onclick="toggleAudio()">
+            <span class="mute-indicator" id="muteIndicator"></span>
+            <span class="audio-icon" id="audioIcon">🔇</span>
+            <span class="audio-label" id="audioLabel">Sounds</span>
+            <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="30" oninput="setVolume(this.value)" onclick="event.stopPropagation()">
+        </div>
+    </div>
+
+    <!-- Audio source panel (appears below the audio control) -->
+    <div class="audio-source-panel" id="audioPanel">
+        <h3>🎵 Choose Audio Source</h3>
+        <p>Paste a direct MP3 URL, or use a local file name (e.g., <code>ocean.mp3</code>) if it's in the same folder as this HTML file.</p>
+        <input type="text" id="audioUrlInput" placeholder="https://example.com/ocean.mp3" value="">
+        <div class="btn-row">
+            <button onclick="loadAudioFromInput()" class="primary">Load & Play</button>
+            <button onclick="toggleAudioPanel()">Close</button>
+        </div>
+        <p style="margin-top:4px;"><strong>Tip:</strong> Right-click any audio file online → "Copy link address" to get a direct URL.</p>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>🌊 Discord Event Schedule</h1>
+            <p>All times automatically converted to your local timezone</p>
+            <div class="timezone-badge">
+                <span>🌍</span>
+                <span id="userTimezone">Detecting...</span>
+            </div>
+        </div>
+
+        <div class="events-grid" id="eventsGrid"></div>
+
+        <div class="countdown" id="countdownSection">
+            <div class="countdown-label">Next event starts in</div>
+            <div class="countdown-time" id="countdownTime">--:--:--</div>
+        </div>
+
+        <div class="footer">
+            <p>Discord timestamps work in any timezone • Click timestamps to copy</p>
+        </div>
+    </div>
+
+    <div class="wave-container"><div class="wave"></div></div>
+
+    <audio id="ambientAudio" loop></audio>
+
+    <script>
+        // ============================================================
+        // 🔊 INSTRUCTIONS FOR YOUR OWN MP3 FILE
+        // ============================================================
+        // 1. Place your .mp3 file in the SAME FOLDER as this HTML file.
+        // 2. Change the line below to the name of your file, for example:
+        //    const DEFAULT_AUDIO_SRC = "my-music.mp3";
+        // 3. Browsers usually block autoplay until the user clicks something.
+        //    So the visitor will need to click the speaker button to start playback.
+        //    That is normal and expected.
+        // ============================================================
+        const DEFAULT_AUDIO_SRC = "mixAudio_20260513_175636.mp3";   // <-- PUT YOUR FILENAME HERE (e.g., "ocean.mp3")
+
+        // ==================== EVENT DATA ====================
+        const events = [
+            { day: "Friday", icon: "🌅", slots: [{ startUTC: "16:00", endUTC: "21:00", label: "Main Session" }] },
+            { day: "Saturday", icon: "⭐", slots: [
+                { startUTC: "09:00", endUTC: "12:00", label: "Morning Session" },
+                { startUTC: "16:00", endUTC: "21:00", label: "Evening Session" }
+            ]},
+            { day: "Sunday", icon: "🌤️", slots: [{ startUTC: "04:30", endUTC: "06:30", label: "Early Session" }] }
+        ];
+
+        // ==================== AUDIO SYSTEM ====================
+        const audioEl = document.getElementById('ambientAudio');
+        let isPlaying = false;
+
+        // Load default audio if provided
+        if (DEFAULT_AUDIO_SRC) {
+            audioEl.src = DEFAULT_AUDIO_SRC;
+            audioEl.load();
+            // Try to autoplay (will likely be blocked, but we attempt anyway)
+            audioEl.play().then(() => {
+                // Autoplay succeeded (rare, only if user has allowed it before)
+                isPlaying = true;
+                document.getElementById('audioIcon').textContent = '🔊';
+                document.getElementById('audioControl').classList.add('playing');
+                document.getElementById('muteIndicator').classList.add('active');
+            }).catch(() => {
+                // Autoplay blocked – that's fine, user will click the button.
+                console.log("Autoplay prevented by browser. User must click the speaker.");
+            });
+        }
+
+        function toggleAudio() {
+            // If no audio source is set, open the panel instead
+            if (!audioEl.src || audioEl.src === window.location.href) {
+                toggleAudioPanel();
+                return;
+            }
+            
+            const control = document.getElementById('audioControl');
+            const icon = document.getElementById('audioIcon');
+            const indicator = document.getElementById('muteIndicator');
+            
+            if (isPlaying) {
+                audioEl.pause();
+                isPlaying = false;
+                icon.textContent = '🔇';
+                control.classList.remove('playing');
+                indicator.classList.remove('active');
+            } else {
+                audioEl.volume = document.getElementById('volumeSlider').value / 100;
+                audioEl.play().then(() => {
+                    isPlaying = true;
+                    icon.textContent = '🔊';
+                    control.classList.add('playing');
+                    indicator.classList.add('active');
+                }).catch(err => {
+                    alert('Could not play audio. Try a different URL or check that the file exists.\n\nError: ' + err.message);
+                });
+            }
+        }
+
+        function toggleAudioPanel() {
+            const panel = document.getElementById('audioPanel');
+            panel.classList.toggle('open');
+        }
+
+        function loadAudioFromInput() {
+            const url = document.getElementById('audioUrlInput').value.trim();
+            if (!url) {
+                alert('Please enter an audio URL or filename.');
+                return;
+            }
+            
+            // Support relative paths (local files) and absolute URLs
+            const finalUrl = url.match(/^https?:\/\//) ? url : url;
+            
+            audioEl.src = finalUrl;
+            audioEl.load();
+            
+            // Auto-play after loading
+            audioEl.volume = document.getElementById('volumeSlider').value / 100;
+            audioEl.play().then(() => {
+                isPlaying = true;
+                document.getElementById('audioIcon').textContent = '🔊';
+                document.getElementById('audioControl').classList.add('playing');
+                document.getElementById('muteIndicator').classList.add('active');
+                document.getElementById('audioPanel').classList.remove('open');
+            }).catch(err => {
+                alert('Failed to load audio.\n\nMake sure:\n• The URL ends in .mp3\n• It\'s a direct link (not a download page)\n• CORS is enabled on the server\n\nError: ' + err.message);
+            });
+        }
+
+        function setVolume(val) {
+            audioEl.volume = val / 100;
+        }
+
+        // ==================== TIMEZONE CONVERSION ====================
+        function getUserTimezone() { return Intl.DateTimeFormat().resolvedOptions().timeZone; }
+
+        function parseUTCTime(dayName, timeStr) {
+            const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+            const targetDay = days.indexOf(dayName);
+            const now = new Date();
+            const currentDay = now.getUTCDay();
+            const currentHour = now.getUTCHours();
+            const currentMinute = now.getUTCMinutes();
+            const [h, m] = timeStr.split(':').map(Number);
+            let daysDiff = targetDay - currentDay;
+            if (daysDiff < 0) daysDiff += 7;
+            if (daysDiff === 0 && (h < currentHour || (h === currentHour && m < currentMinute))) daysDiff += 7;
+            const d = new Date(now);
+            d.setUTCDate(d.getUTCDate() + daysDiff);
+            d.setUTCHours(h, m, 0, 0);
+            return d;
+        }
+
+        function formatLocalTime(date) { return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true }); }
+        function formatLocalDate(date) { return date.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' }); }
+        function getDiscordTimestamp(date, format = 'F') { return `<t:${Math.floor(date.getTime() / 1000)}:${format}>`; }
+
+        function getEventStatus(start, end) {
+            const now = new Date();
+            if (now >= start && now <= end) return 'ongoing';
+            if (now < start) return (start - now) < 3600000 ? 'soon' : 'upcoming';
+            return 'ended';
+        }
+
+        function getNextEvent() {
+            const now = new Date();
+            let next = null, minDiff = Infinity;
+            events.forEach(day => {
+                day.slots.forEach(slot => {
+                    const start = parseUTCTime(day.day, slot.startUTC);
+                    const diff = start - now;
+                    if (diff > 0 && diff < minDiff) { minDiff = diff; next = start; }
+                });
+            });
+            return next;
+        }
+
+        // ==================== RENDER ====================
+        function renderEvents() {
+            const grid = document.getElementById('eventsGrid');
+            document.getElementById('userTimezone').textContent = getUserTimezone().replace(/_/g, ' ');
+            
+            grid.innerHTML = events.map(day => {
+                const dayHasLive = day.slots.some(slot => {
+                    const s = parseUTCTime(day.day, slot.startUTC);
+                    const e = parseUTCTime(day.day, slot.endUTC);
+                    return getEventStatus(s, e) === 'ongoing';
+                });
+                const dayHasSoon = day.slots.some(slot => {
+                    const s = parseUTCTime(day.day, slot.startUTC);
+                    const e = parseUTCTime(day.day, slot.endUTC);
+                    return getEventStatus(s, e) === 'soon';
+                });
+                let badge = '';
+                if (dayHasLive) badge = '<span class="day-badge badge-live">● Live</span>';
+                else if (dayHasSoon) badge = '<span class="day-badge badge-soon">⏰ Soon</span>';
+                
+                const slotsHtml = day.slots.map(slot => {
+                    const start = parseUTCTime(day.day, slot.startUTC);
+                    const end = parseUTCTime(day.day, slot.endUTC);
+                    const status = getEventStatus(start, end);
+                    const discordTs = getDiscordTimestamp(start, 't');
+                    let statusClass = 'status-upcoming', statusText = 'Upcoming';
+                    if (status === 'ongoing') { statusClass = 'status-ongoing'; statusText = 'Live Now'; }
+                    else if (status === 'soon') { statusClass = 'status-upcoming'; statusText = 'Starting Soon'; }
+                    else if (status === 'ended') { statusClass = 'status-ended'; statusText = 'Ended'; }
+                    
+                    return `<div class="event-slot">
+                        <div><div class="slot-time">${formatLocalTime(start)} – ${formatLocalTime(end)}</div>
+                        <div class="slot-utc">${formatLocalDate(start)} • UTC ${slot.startUTC}–${slot.endUTC} • ${slot.label}</div></div>
+                        <span class="slot-status ${statusClass}">${statusText}</span>
+                        <span class="slot-discord" onclick="copyTimestamp(this, '${discordTs.replace(/'/g, "\\'")}')">${discordTs}</span>
+                    </div>`;
+                }).join('');
+                
+                return `<div class="day-card"><div class="day-header">
+                    <span class="day-icon">${day.icon}</span><span class="day-title">${day.day}</span>${badge}
+                </div><div class="event-slots">${slotsHtml}</div></div>`;
+            }).join('');
+        }
+
+        function copyTimestamp(el, ts) {
+            navigator.clipboard.writeText(ts).then(() => {
+                const original = el.textContent;
+                el.textContent = 'Copied!';
+                el.classList.add('copied');
+                setTimeout(() => { el.textContent = original; el.classList.remove('copied'); }, 1500);
+            });
+        }
+
+        function updateCountdown() {
+            const next = getNextEvent();
+            const el = document.getElementById('countdownTime');
+            if (!next) { el.textContent = "No upcoming events"; return; }
+            const diff = next - new Date();
+            const h = Math.floor(diff / 3600000);
+            const m = Math.floor((diff % 3600000) / 60000);
+            const s = Math.floor((diff % 60000) / 1000);
+            el.textContent = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+        }
+
+        function setBg(name) {
+            document.body.className = 'bg-' + name;
+            document.querySelectorAll('.bg-option').forEach(opt => opt.classList.remove('active'));
+            document.querySelector('.bg-' + name + '-opt').classList.add('active');
+        }
+
+        // ==================== INIT ====================
+        renderEvents();
+        updateCountdown();
+        setInterval(() => { renderEvents(); updateCountdown(); }, 1000);
+    </script>
+</body>
+</html>
