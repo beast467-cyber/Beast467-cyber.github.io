@@ -32,6 +32,56 @@
         .bg-aurora { background-image: linear-gradient(rgba(0,30,20,0.6), rgba(0,30,20,0.7)), url('https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=1920&q=80'); }
         .bg-storm { background-image: linear-gradient(rgba(20,20,30,0.75), rgba(20,20,30,0.85)), url('https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=1920&q=80'); }
 
+        /* ===== TAP TO ENTER OVERLAY ===== */
+        .enter-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            background: linear-gradient(rgba(0,10,30,0.9), rgba(0,10,30,0.95));
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            cursor: pointer;
+            transition: opacity 0.6s ease, visibility 0.6s ease;
+        }
+        .enter-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        .enter-overlay .enter-icon {
+            font-size: 4rem;
+            animation: pulse 2s infinite;
+        }
+        .enter-overlay h2 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .enter-overlay p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            max-width: 400px;
+            text-align: center;
+            line-height: 1.5;
+        }
+        .enter-overlay .tap-hint {
+            margin-top: 16px;
+            padding: 12px 32px;
+            background: var(--accent);
+            color: #0f172a;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1rem;
+            animation: pulse 2s infinite;
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
         /* ===== TOP BAR (prevents overlap) ===== */
         .top-bar {
             position: fixed;
@@ -280,6 +330,8 @@
         .footer { text-align: center; margin-top: 40px; padding: 20px; color: var(--text-secondary); font-size: 0.85rem; }
 
         @media (max-width: 600px) {
+            .enter-overlay h2 { font-size: 1.6rem; }
+            .enter-overlay p { font-size: 0.95rem; padding: 0 20px; }
             .header h1 { font-size: 2rem; }
             .day-card { padding: 20px; }
             .slot-time { font-size: 1.1rem; min-width: auto; }
@@ -306,6 +358,15 @@
     </style>
 </head>
 <body class="bg-ocean">
+
+    <!-- Tap to Enter Overlay -->
+    <div class="enter-overlay" id="enterOverlay" onclick="enterSite()">
+        <div class="enter-icon">🌊</div>
+        <h2>Discord Event Schedule</h2>
+        <p>Tap anywhere to enter with ambient sound, or continue silently.</p>
+        <div class="tap-hint">Tap to Enter</div>
+    </div>
+
     <div class="top-bar">
         <!-- Background selector (left) -->
         <div class="bg-selector">
@@ -370,11 +431,34 @@
         // 1. Place your .mp3 file in the SAME FOLDER as this HTML file.
         // 2. Change the line below to the name of your file, for example:
         //    const DEFAULT_AUDIO_SRC = "my-music.mp3";
-        // 3. Browsers usually block autoplay until the user clicks something.
-        //    So the visitor will need to click the speaker button to start playback.
-        //    That is normal and expected.
+        // 3. The music will now start automatically when the user taps to enter.
         // ============================================================
         const DEFAULT_AUDIO_SRC = "your.mp3";   // <-- PUT YOUR FILENAME HERE (e.g., "ocean.mp3")
+
+        // ==================== ENTER OVERLAY ====================
+        let hasEntered = false;
+
+        function enterSite() {
+            if (hasEntered) return;
+            hasEntered = true;
+            
+            const overlay = document.getElementById('enterOverlay');
+            overlay.classList.add('hidden');
+            
+            // Start audio immediately after user gesture
+            if (DEFAULT_AUDIO_SRC) {
+                audioEl.src = DEFAULT_AUDIO_SRC;
+                audioEl.volume = document.getElementById('volumeSlider').value / 100;
+                audioEl.play().then(() => {
+                    isPlaying = true;
+                    document.getElementById('audioIcon').textContent = '🔊';
+                    document.getElementById('audioControl').classList.add('playing');
+                    document.getElementById('muteIndicator').classList.add('active');
+                }).catch(err => {
+                    console.log("Audio play failed:", err);
+                });
+            }
+        }
 
         // ==================== EVENT DATA ====================
         const events = [
@@ -390,21 +474,10 @@
         const audioEl = document.getElementById('ambientAudio');
         let isPlaying = false;
 
-        // Load default audio if provided
+        // Pre-load audio metadata but don't autoplay yet (browser blocks it)
         if (DEFAULT_AUDIO_SRC) {
             audioEl.src = DEFAULT_AUDIO_SRC;
             audioEl.load();
-            // Try to autoplay (will likely be blocked, but we attempt anyway)
-            audioEl.play().then(() => {
-                // Autoplay succeeded (rare, only if user has allowed it before)
-                isPlaying = true;
-                document.getElementById('audioIcon').textContent = '🔊';
-                document.getElementById('audioControl').classList.add('playing');
-                document.getElementById('muteIndicator').classList.add('active');
-            }).catch(() => {
-                // Autoplay blocked – that's fine, user will click the button.
-                console.log("Autoplay prevented by browser. User must click the speaker.");
-            });
         }
 
         function toggleAudio() {
@@ -593,3 +666,4 @@
     </script>
 </body>
 </html>
+
