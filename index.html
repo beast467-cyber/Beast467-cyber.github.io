@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+here<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1092,7 +1092,7 @@
             }
         };
 
-        // ========== AUDIO SYSTEM (original) ==========
+        // ========== AUDIO SYSTEM (fixed for autoplay on enter) ==========
         const audioEl = document.getElementById('ambientAudio');
         let isPlaying = false;
         window.toggleAudio = function() {
@@ -1133,10 +1133,22 @@
             if (hasEntered) return;
             hasEntered = true;
             document.getElementById('enterOverlay').classList.add('hidden');
-            if (DEFAULT_AUDIO_SRC && DEFAULT_AUDIO_SRC !== "https://files.catbox.moe/mttzfu.mp3") {
+            // Try to play the default audio file
+            if (DEFAULT_AUDIO_SRC && DEFAULT_AUDIO_SRC !== "your.mp3") { // only if user has replaced it with a real file
                 audioEl.src = DEFAULT_AUDIO_SRC;
                 audioEl.volume = document.getElementById('volumeSlider').value / 100;
-                audioEl.play().catch(e => console.log("Autoplay blocked, tap again"));
+                audioEl.play().then(() => {
+                    isPlaying = true;
+                    document.getElementById('audioIcon').textContent = '🔊';
+                    document.getElementById('audioControl').classList.add('playing');
+                    document.getElementById('muteIndicator').classList.add('active');
+                }).catch(err => {
+                    console.warn("Autoplay failed:", err);
+                    alert("Could not play your.mp3 – make sure the file exists in the same folder as this page.\n\nYou can also use the 🎵 panel to paste a direct audio link.");
+                });
+            } else if (DEFAULT_AUDIO_SRC === "your.mp3") {
+                // default placeholder – suggest using the audio panel
+                console.log("No custom audio file set. Use the audio panel to load music.");
             }
         };
 
@@ -1189,4 +1201,4 @@
         autoExpand();
     </script>
 </body>
-                                                                                                                                                                                                                                            </html>
+    </html>
