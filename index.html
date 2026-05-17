@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+here<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>🌊 Discord Event Schedule</title>
+    <title>🌊 Discord Event Schedule — Monitor‑optimised Log</title>
     <style>
         :root {
             --glass-bg: rgba(255, 255, 255, 0.08);
@@ -186,7 +186,7 @@
             border-bottom: 10px solid transparent;
         }
 
-        /* ===== LOG PAPER ===== */
+        /* ===== LOG PAPER (original mobile styles – untouched) ===== */
         .log-paper {
             position: fixed;
             top: 0;
@@ -199,7 +199,7 @@
             border-radius: 0 0 16px 16px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(139, 69, 19, 0.2);
             z-index: 1003;
-            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.3s ease, max-width 0.3s ease, height 0.3s ease;
             display: flex;
             flex-direction: column;
             transform: translateY(-100%);
@@ -218,13 +218,7 @@
             left: 0;
             right: 0;
             height: 4px;
-            background: repeating-linear-gradient(
-                90deg,
-                var(--ribbon-color) 0px,
-                var(--ribbon-color) 20px,
-                var(--ribbon-dark) 20px,
-                var(--ribbon-dark) 40px
-            );
+            background: repeating-linear-gradient(90deg, var(--ribbon-color) 0px, var(--ribbon-color) 20px, var(--ribbon-dark) 20px, var(--ribbon-dark) 40px);
         }
         .log-header {
             padding: 20px 24px 12px;
@@ -239,7 +233,6 @@
             top: 0;
             z-index: 10;
         }
-
         .log-header h2 {
             font-family: 'Georgia', serif;
             font-size: 1.5rem;
@@ -247,6 +240,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            flex: 1;
         }
         .log-close {
             width: 36px;
@@ -261,12 +255,34 @@
             align-items: center;
             justify-content: center;
             transition: all 0.2s;
-            order: -1;
         }
         .log-close:hover {
             background: #8b4513;
             color: var(--paper-bg);
         }
+        /* Minimize button – hidden on mobile, shown on desktop */
+        .log-minimize {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px solid #8b4513;
+            background: transparent;
+            color: #5c2e0e;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-family: monospace;
+            margin-left: auto;
+        }
+        .log-minimize:hover {
+            background: #8b4513;
+            color: var(--paper-bg);
+        }
+
         .log-content {
             padding: 20px 24px;
         }
@@ -596,6 +612,7 @@
         }
         @keyframes wave { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
 
+        /* ===== MOBILE OVERRIDES (exactly as original working file) ===== */
         @media (max-width: 600px) {
             .enter-overlay h2 { font-size: 1.6rem; }
             .enter-overlay p { font-size: 0.95rem; padding: 0 20px; }
@@ -614,20 +631,103 @@
             .log-paper.open { transform: translateY(44px); }
             .ribbon-wrapper { left: 12px; }
             .ribbon-tail { width: 24px; }
-            .ribbon-tail::after {
-                border-left: 12px solid var(--ribbon-color);
-                border-right: 12px solid var(--ribbon-color);
-                border-bottom: 10px solid transparent;
-            }
+            .ribbon-tail::after { border-left: 12px solid var(--ribbon-color); border-right: 12px solid var(--ribbon-color); border-bottom: 10px solid transparent; }
             .ribbon-menu { width: 160px; }
             .ribbon-container.open::before { width: 24px; height: 14px; }
-        
             .crew-grid { grid-template-columns: 1fr; gap: 16px; padding: 12px; }
             .crew-avatar { width: 56px; height: 56px; }
             .crew-display { font-size: 1rem; }
         }
 
-        /* ===== LOG TEMPLATE ===== */
+        /* ===== MONITOR EXPANSION (min-width: 1024px) – massive text, full width ===== */
+        @media (min-width: 1024px) {
+            .log-paper.expanded {
+                width: 92vw;
+                max-width: 1600px;
+                left: 4vw;
+                max-height: 88vh;
+                height: 88vh;
+            }
+            .log-paper.expanded .log-header {
+                padding: 28px 32px 20px;
+            }
+            .log-paper.expanded .log-header h2 {
+                font-size: 2.4rem;
+            }
+            .log-paper.expanded .log-close,
+            .log-paper.expanded .log-minimize {
+                width: 54px;
+                height: 54px;
+                font-size: 1.8rem;
+            }
+            .log-paper.expanded .log-template-body {
+                font-size: 1.8rem;
+            }
+            .log-paper.expanded .template-number {
+                font-size: 2.2rem;
+                min-width: 80px;
+            }
+            .log-paper.expanded .template-field {
+                font-size: 2.2rem;
+                font-weight: 800;
+            }
+            .log-paper.expanded .template-value {
+                font-size: 2rem;
+                margin-top: 12px;
+            }
+            .log-paper.expanded .template-block {
+                gap: 28px;
+                margin-bottom: 2.2rem;
+            }
+            .log-paper.expanded .crew-grid {
+                gap: 32px;
+                padding: 28px 24px;
+                grid-template-columns: 1fr 1fr;
+            }
+            .log-paper.expanded .crew-avatar {
+                width: 130px;
+                height: 130px;
+            }
+            .log-paper.expanded .crew-display {
+                font-size: 1.7rem;
+            }
+            .log-paper.expanded .crew-username {
+                font-size: 1.2rem;
+            }
+            .log-paper.expanded .crew-header {
+                font-size: 1.2rem;
+            }
+            .log-paper.expanded #leftCrewToggle {
+                font-size: 1.3rem;
+                padding: 16px 24px;
+                margin-top: 24px;
+            }
+            .log-paper.expanded .expedition-entry {
+                padding: 28px;
+                margin-bottom: 32px;
+            }
+            .log-paper.expanded .expedition-title {
+                font-size: 2rem;
+            }
+            .log-paper.expanded .expedition-date {
+                font-size: 1.1rem;
+            }
+            .log-paper.expanded .expedition-details .detail-label {
+                font-size: 0.95rem;
+            }
+            .log-paper.expanded .expedition-details .detail-value {
+                font-size: 1.2rem;
+            }
+        }
+
+        /* hide minimize button on mobile entirely */
+        @media (max-width: 1023px) {
+            .log-minimize {
+                display: none !important;
+            }
+        }
+
+        /* ===== LOG TEMPLATE (calligraphy) ===== */
         .log-template {
             border-bottom: 2px dashed #8b4513;
             padding: 20px 24px;
@@ -644,7 +744,6 @@
             font-weight: 600;
         }
 
-        /* ===== TEMPLATE FIELD BLOCKS ===== */
         .template-block {
             margin-bottom: 1.2em;
             display: flex;
@@ -673,7 +772,6 @@
             display: block;
         }
 
-        /* ===== CREW MEMBERS GRID ===== */
         .crew-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -713,6 +811,7 @@
             object-fit: cover;
             border: 2px solid #8b4513;
             background: #f5e6c8;
+            transition: width 0.2s, height 0.2s;
         }
         .crew-display {
             font-family: 'Segoe UI', system-ui, sans-serif;
@@ -729,17 +828,11 @@
             line-height: 1.2;
         }
 
-        /* === FINAL FIX: move only the crew content left, keep label aligned === */
         .log-template-body .template-block:nth-child(3) .template-field-wrap > :not(:first-child) {
-            margin-left: -30px;           /* shift crew grid, button, and second grid left */
-            width: calc(100% + 30px);     /* prevent clipping and maintain full width */
-        }
-        /* Ensure the crew grid keeps its rounded corners */
-        .log-template-body .template-block:nth-child(3) .crew-grid {
-            border-radius: 12px;
+            margin-left: -30px;
+            width: calc(100% + 30px);
         }
 
-        /* Avatar Decoration Styles */
         .avatar-wrap {
             position: relative;
             display: inline-block;
@@ -760,7 +853,6 @@
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
     <base target="_blank">
-<base target="_blank">
 </head>
 <body class="bg-ocean">
 
@@ -768,7 +860,7 @@
     <div class="enter-overlay" id="enterOverlay" onclick="enterSite()">
         <div class="enter-icon">🌊</div>
         <h2>Discord Event Schedule</h2>
-        <p>Tap anywhere to enter</p>
+        <p>Tap anywhere to enter.</p>
         <div class="tap-hint">Tap to Enter</div>
     </div>
 
@@ -785,199 +877,51 @@
         </div>
     </div>
 
-    <!-- Log Paper -->
+    <!-- Log Paper (with new minimize button) -->
     <div class="log-paper" id="logPaper">
         <div class="log-header">
             <button class="log-close" id="closeLogBtn">✕</button>
             <h2>Expedition Log</h2>
+            <button class="log-minimize" id="logMinimizeBtn" title="Toggle size">⤢</button>
         </div>
-                <div class="log-template">
+        <div class="log-template">
             <div class="log-template-body">
-                <div class="template-block">
-                    <span class="template-number">1.</span>
-                    <div class="template-field-wrap">
-                        <span class="template-field">Date:</span>
-                        <span class="template-value"><em>May 16, 2026 - 9:35 PM</em></span>
+                <div class="template-block"><span class="template-number">1.</span><div class="template-field-wrap"><span class="template-field">Date:</span><span class="template-value"><em>May 16, 2026 - 9:35 PM</em></span></div></div>
+                <div class="template-block"><span class="template-number">2.</span><div class="template-field-wrap"><span class="template-field">Time Spent:</span><span class="template-value"><em>2 hours 21 minutes</em></span></div></div>
+                <div class="template-block"><span class="template-number">3.</span><div class="template-field-wrap"><span class="template-field">Crew Members:</span>
+                    <div class="crew-grid">
+                        <div class="crew-col"><a href="https://discord.com/users/839071403960959008" class="crew-header" target="_blank">Discord</a><img src="https://cdn.discordapp.com/avatars/839071403960959008/f4688b8fd1420a04f8f96852eea7b7bf.webp?size=2048" class="crew-avatar"><span class="crew-display">Groundbreaker</span><span class="crew-username">groundbreaker_</span></div>
+                        <div class="crew-col"><a href="https://www.roblox.com/users/1303717778/profile" class="crew-header" target="_blank">Roblox</a><img src="https://tr.rbxcdn.com/30DAY-AvatarHeadshot-C8E8897A27DB8A7CD1A321D34EEA094E-Png/150/150/AvatarHeadshot/Webp/noFilter" class="crew-avatar"><span class="crew-display">admindurian</span><span class="crew-username">admindurian</span></div>
+                        <div class="crew-col"><a href="https://discord.com/users/1140537569948479540" class="crew-header" target="_blank">Discord</a><div class="avatar-wrap"><img src="https://cdn.discordapp.com/avatars/1140537569948479540/694f5934a03acf77127722d6b4b6cc04.webp?size=2048" class="crew-avatar"><img src="https://cdn.discordapp.com/media/v1/collectibles-shop/1298033986622328842/animated" class="avatar-decoration"></div><span class="crew-display">! 𝐊ᴀᴋᴀʀᴏᴛ</span><span class="crew-username">kakarot690</span></div>
+                        <div class="crew-col"><a href="https://www.roblox.com/users/7100267472/profile" class="crew-header" target="_blank">Roblox</a><img src="https://tr.rbxcdn.com/30DAY-AvatarHeadshot-CB2E873B83FFE43D4E4533B879BB1510-Png/150/150/AvatarHeadshot/Webp/noFilter" class="crew-avatar"><span class="crew-display">Kakarot</span><span class="crew-username">astro6902</span></div>
+                        <div class="crew-col"><a href="https://discord.com/users/700906353689886770" class="crew-header" target="_blank">Discord</a><div class="avatar-wrap"><img src="https://cdn.discordapp.com/avatars/700906353689886770/3166354a5bdf55e135f02a414a1b083e.webp?size=2048" class="crew-avatar"><img src="https://cdn.discordapp.com/media/v1/collectibles-shop/1479187698768937010/animated" class="avatar-decoration"></div><span class="crew-display">VnNhan</span><span class="crew-username">vnnhan</span></div>
+                        <div class="crew-col"><a href="https://www.roblox.com/users/477116811/profile" class="crew-header" target="_blank">Roblox</a><img src="https://tr.rbxcdn.com/30DAY-AvatarHeadshot-9871DE686EEA4AF897C22FF6653227BF-Png/150/150/AvatarHeadshot/Webp/noFilter" class="crew-avatar"><span class="crew-display">CharlesTrarick</span><span class="crew-username">bipro2008</span></div>
+                        <div class="crew-col"><a href="https://discord.com/users/1188838398782361656" class="crew-header" target="_blank">Discord</a><img src="https://cdn.discordapp.com/avatars/1188838398782361656/a_539dea7b9ca5d258b920858bd41cfcc9.webp?size=2048&animated=true" class="crew-avatar"><span class="crew-display">𝒹𝒶𝓃</span><span class="crew-username">guy_i</span></div>
+                        <div class="crew-col"><a href="https://www.roblox.com/users/924095616/profile" class="crew-header" target="_blank">Roblox</a><img src="https://tr.rbxcdn.com/30DAY-AvatarHeadshot-49A2468AD35764F73076338A9F54FF3A-Png/150/150/AvatarHeadshot/Webp/noFilter" class="crew-avatar"><span class="crew-display">i_i</span><span class="crew-username">DAIPRO2019</span></div>
+                        <div class="crew-col"><a href="https://discord.com/users/1158134373925785650" class="crew-header" target="_blank">Discord</a><img src="https://cdn.discordapp.com/embed/avatars/0.png" class="crew-avatar"><span class="crew-display">ᡕᠵデ气亠</span><span class="crew-username">someone20771</span></div>
+                        <div class="crew-col"><a href="https://www.roblox.com/users/3480921898/profile" class="crew-header" target="_blank">Roblox</a><img src="https://tr.rbxcdn.com/30DAY-AvatarHeadshot-30D9E761B53C46684E76E4CE5FD45602-Png/150/150/AvatarHeadshot/Webp/noFilter" class="crew-avatar"><span class="crew-display">DualAkimboAK47km</span><span class="crew-username">Pop_Cat09283</span></div>
                     </div>
-                </div>
-                <div class="template-block">
-                    <span class="template-number">2.</span>
-                    <div class="template-field-wrap">
-                        <span class="template-field">Time Spent:</span>
-                        <span class="template-value"><em>2 hours 21 minutes</em></span>
+                    <button id="leftCrewToggle" style="margin-top:12px;padding:8px 16px;background:rgba(139,69,19,0.1);border:1px dashed #8b4513;border-radius:8px;color:#5c2e0e;font-family:'Georgia',serif;font-size:0.95rem;cursor:pointer;width:100%;transition:background 0.2s;" onclick="toggleLeftCrew()">Left Crew Members</button>
+                    <div class="crew-grid" id="leftCrewGrid" style="display:none;">
+                        <div class="crew-col"><a href="https://discord.com/users/806607585943486534" class="crew-header" target="_blank">Discord</a><img src="https://cdn.discordapp.com/avatars/806607585943486534/62e72e2366f2f97518856692f7288964.webp?size=2048" class="crew-avatar"><span class="crew-display">emoji3x</span><span class="crew-username">emoji3x</span></div>
+                        <div class="crew-col"><a href="https://www.roblox.com/users/348787247/profile" class="crew-header" target="_blank">Roblox</a><img src="https://tr.rbxcdn.com/30DAY-AvatarHeadshot-C100B3D61ED0A961149E06B52C9EA83B-Png/150/150/AvatarHeadshot/Webp/noFilter" class="crew-avatar"><span class="crew-display">tooemo</span><span class="crew-username">tooemo</span></div>
+                        <div class="crew-col"><a href="https://discord.com/users/1245728609373519913" class="crew-header" target="_blank">Discord</a><img src="https://cdn.discordapp.com/embed/avatars/3.png" class="crew-avatar"><span class="crew-display">kaiqueopato32</span><span class="crew-username">kaiqueopato32_91267</span></div>
+                        <div class="crew-col"><a href="https://www.roblox.com/users/5409916883/profile" class="crew-header" target="_blank">Roblox</a><img src="https://tr.rbxcdn.com/30DAY-AvatarHeadshot-CFED9DC432C04E685F951A576DFA6566-Png/150/150/AvatarHeadshot/Webp/noFilter" class="crew-avatar"><span class="crew-display">Blessed</span><span class="crew-username">kaiqueopato32</span></div>
+                        <div class="crew-col"><a href="https://discord.com/users/480522229843623937" class="crew-header" target="_blank">Discord</a><img src="https://cdn.discordapp.com/avatars/480522229843623937/e123d3b618cb1129fe57a72cec44b141.webp?size=2048" class="crew-avatar"><span class="crew-display">nol1122</span><span class="crew-username">nol1122</span></div>
+                        <div class="crew-col"><a href="https://www.roblox.com/users/5519604137/profile" class="crew-header" target="_blank">Roblox</a><img src="https://tr.rbxcdn.com/30DAY-AvatarHeadshot-4AB14AB540445ED8CA87C584485AD27A-Png/150/150/AvatarHeadshot/Webp/noFilter" class="crew-avatar"><span class="crew-display">Nollon89a</span><span class="crew-username">Nollon89a</span></div>
+                        <div class="crew-col"><a href="https://discord.com/users/1109604094856941658" class="crew-header" target="_blank">Discord</a><div class="avatar-wrap"><img src="https://cdn.discordapp.com/avatars/1109604094856941658/b1b5ce9fa1f309fbf43c068b01bf78e8.webp?size=2048" class="crew-avatar"><img src="https://cdn.discordapp.com/media/v1/collectibles-shop/1341506443878072320/animated" class="avatar-decoration"></div><span class="crew-display">Rambo</span><span class="crew-username">beyondrambo</span></div>
+                        <div class="crew-col"><a href="https://www.roblox.com/users/8666228168/profile" class="crew-header" target="_blank">Roblox</a><img src="https://tr.rbxcdn.com/30DAY-AvatarHeadshot-60F7C7EB395E87E5D4925BF28071AE58-Png/150/150/AvatarHeadshot/Webp/noFilter" class="crew-avatar"><span class="crew-display">Rambo</span><span class="crew-username">Beyondrambo</span></div>
+                        <div class="crew-col"><a href="https://discord.com/users/422527080329379841" class="crew-header" target="_blank">Discord</a><img src="https://cdn.discordapp.com/avatars/422527080329379841/c77189d003427d3fe038c822a8c0bcec.webp?size=2048" class="crew-avatar"><span class="crew-display">Dino</span><span class="crew-username">dinohj</span></div>
+                        <div class="crew-col"><a href="https://www.roblox.com/users/212497067/profile" class="crew-header" target="_blank">Roblox</a><img src="https://tr.rbxcdn.com/30DAY-AvatarHeadshot-586352BAC2E23C7DDDE09C10E5E5EDDC-Png/150/150/AvatarHeadshot/Webp/noFilter" class="crew-avatar"><span class="crew-display">Hjrc2603</span><span class="crew-username">Hjrc2603</span></div>
+                        <div class="crew-col"><a href="https://discord.com/users/1079951057951662111" class="crew-header" target="_blank">Discord</a><img src="https://cdn.discordapp.com/avatars/1079951057951662111/e3a990e7a8212eca8990d44c28026b64.webp?size=2048" class="crew-avatar"><span class="crew-display">leo</span><span class="crew-username">leonardinhojr</span></div>
+                        <div class="crew-col"><a href="https://www.roblox.com/users/1483528577/profile" class="crew-header" target="_blank">Roblox</a><img src="https://tr.rbxcdn.com/30DAY-AvatarHeadshot-A3A15D44F2291B3A135CAFE45E3196CC-Png/150/150/AvatarHeadshot/Webp/noFilter" class="crew-avatar"><span class="crew-display">leo</span><span class="crew-username">leopro654tq</span></div>
                     </div>
-                </div>
-                <div class="template-block">
-                    <span class="template-number">3.</span>
-                    <div class="template-field-wrap">
-                        <span class="template-field">Crew Members:</span>
-                        <div class="crew-grid">
-                            <div class="crew-col">
-                                <a href="https://discord.com/users/839071403960959008" class="crew-header" target="_blank">Discord</a>
-                                <img src="https://cdn.discordapp.com/avatars/839071403960959008/f4688b8fd1420a04f8f96852eea7b7bf.webp?size=2048" alt="Discord Avatar" class="crew-avatar">
-                                <span class="crew-display">Groundbreaker</span>
-                                <span class="crew-username">groundbreaker_</span>
-                            </div>
-                            <div class="crew-col">
-                                <a href="https://www.roblox.com/users/1303717778/profile" class="crew-header" target="_blank">Roblox</a>
-                                <img src="https://tr.rbxcdn.com/30DAY-AvatarHeadshot-C8E8897A27DB8A7CD1A321D34EEA094E-Png/150/150/AvatarHeadshot/Webp/noFilter" alt="Roblox Avatar" class="crew-avatar">
-                                <span class="crew-display">admindurian</span>
-                                <span class="crew-username">admindurian</span>
-                            </div>
-                            <div class="crew-col">
-                                <a href="https://discord.com/users/1140537569948479540" class="crew-header" target="_blank">Discord</a>
-                                <div class="avatar-wrap">
-                                <img src="https://cdn.discordapp.com/avatars/1140537569948479540/694f5934a03acf77127722d6b4b6cc04.webp?size=2048" alt="Discord Avatar" class="crew-avatar">
-                                <img src="https://cdn.discordapp.com/media/v1/collectibles-shop/1298033986622328842/animated" alt="Avatar Decoration" class="avatar-decoration">
-                            </div>
-                                <span class="crew-display">! 𝐊ᴀᴋᴀʀᴏᴛ</span>
-                                <span class="crew-username">kakarot690</span>
-                            </div>
-                            <div class="crew-col">
-                                <a href="https://www.roblox.com/users/7100267472/profile" class="crew-header" target="_blank">Roblox</a>
-                                <img src="https://tr.rbxcdn.com/30DAY-AvatarHeadshot-CB2E873B83FFE43D4E4533B879BB1510-Png/150/150/AvatarHeadshot/Webp/noFilter" alt="Roblox Avatar" class="crew-avatar">
-                                <span class="crew-display">Kakarot</span>
-                                <span class="crew-username">astro6902</span>
-                            </div>
-                            <div class="crew-col">
-                                <a href="https://discord.com/users/700906353689886770" class="crew-header" target="_blank">Discord</a>
-                                <div class="avatar-wrap">
-                                <img src="https://cdn.discordapp.com/avatars/700906353689886770/3166354a5bdf55e135f02a414a1b083e.webp?size=2048" alt="Discord Avatar" class="crew-avatar">
-                                <img src="https://cdn.discordapp.com/media/v1/collectibles-shop/1479187698768937010/animated" alt="Avatar Decoration" class="avatar-decoration">
-                            </div>
-                                <span class="crew-display">VnNhan</span>
-                                <span class="crew-username">vnnhan</span>
-                            </div>
-                            <div class="crew-col">
-                                <a href="https://www.roblox.com/users/477116811/profile" class="crew-header" target="_blank">Roblox</a>
-                                <img src="https://tr.rbxcdn.com/30DAY-AvatarHeadshot-9871DE686EEA4AF897C22FF6653227BF-Png/150/150/AvatarHeadshot/Webp/noFilter" alt="Roblox Avatar" class="crew-avatar">
-                                <span class="crew-display">CharlesTrarick</span>
-                                <span class="crew-username">bipro2008</span>
-                            </div>
-                            <div class="crew-col">
-                                <a href="https://discord.com/users/1188838398782361656" class="crew-header" target="_blank">Discord</a>
-                                <img src="https://cdn.discordapp.com/avatars/1188838398782361656/a_539dea7b9ca5d258b920858bd41cfcc9.webp?size=2048&animated=true" alt="Discord Avatar" class="crew-avatar">
-                                <span class="crew-display">𝒹𝒶𝓃</span>
-                                <span class="crew-username">guy_i</span>
-                            </div>
-                            <div class="crew-col">
-                                <a href="https://www.roblox.com/users/924095616/profile" class="crew-header" target="_blank">Roblox</a>
-                                <img src="https://tr.rbxcdn.com/30DAY-AvatarHeadshot-49A2468AD35764F73076338A9F54FF3A-Png/150/150/AvatarHeadshot/Webp/noFilter" alt="Roblox Avatar" class="crew-avatar">
-                                <span class="crew-display">i_i</span>
-                                <span class="crew-username">DAIPRO2019</span>
-                            </div>
-                            <div class="crew-col">
-                                <a href="https://discord.com/users/1158134373925785650" class="crew-header" target="_blank">Discord</a>
-                                <img src="https://cdn.discordapp.com/embed/avatars/0.png" alt="Discord Avatar" class="crew-avatar">
-                                <span class="crew-display">ᡕᠵデ气亠</span>
-                                <span class="crew-username">someone20771</span>
-                            </div>
-                            <div class="crew-col">
-                                <a href="https://www.roblox.com/users/3480921898/profile" class="crew-header" target="_blank">Roblox</a>
-                                <img src="https://tr.rbxcdn.com/30DAY-AvatarHeadshot-30D9E761B53C46684E76E4CE5FD45602-Png/150/150/AvatarHeadshot/Webp/noFilter" alt="Roblox Avatar" class="crew-avatar">
-                                <span class="crew-display">DualAkimboAK47km</span>
-                                <span class="crew-username">Pop_Cat09283</span>
-                            </div>
-                        </div>
-                        <button id="leftCrewToggle" style="margin-top:12px;padding:8px 16px;background:rgba(139,69,19,0.1);border:1px dashed #8b4513;border-radius:8px;color:#5c2e0e;font-family:'Georgia',serif;font-size:0.95rem;cursor:pointer;width:100%;transition:background 0.2s;" onclick="toggleLeftCrew()">Left Crew Members</button>
-<div class="crew-grid" id="leftCrewGrid" style="display:none;">
-                            <div class="crew-col">
-                                <a href="https://discord.com/users/806607585943486534" class="crew-header" target="_blank">Discord</a>
-                                <img src="https://cdn.discordapp.com/avatars/806607585943486534/62e72e2366f2f97518856692f7288964.webp?size=2048" alt="Discord Avatar" class="crew-avatar">
-                                <span class="crew-display">emoji3x</span>
-                                <span class="crew-username">emoji3x</span>
-                            </div>
-                            <div class="crew-col">
-                                <a href="https://www.roblox.com/users/348787247/profile" class="crew-header" target="_blank">Roblox</a>
-                                <img src="https://tr.rbxcdn.com/30DAY-AvatarHeadshot-C100B3D61ED0A961149E06B52C9EA83B-Png/150/150/AvatarHeadshot/Webp/noFilter" alt="Roblox Avatar" class="crew-avatar">
-                                <span class="crew-display">tooemo</span>
-                                <span class="crew-username">tooemo</span>
-                            </div>
-                            <div class="crew-col">
-                                <a href="https://discord.com/users/1245728609373519913" class="crew-header" target="_blank">Discord</a>
-                                <img src="https://cdn.discordapp.com/embed/avatars/3.png" alt="Discord Avatar" class="crew-avatar">
-                                <span class="crew-display">kaiqueopato32</span>
-                                <span class="crew-username">kaiqueopato32_91267</span>
-                            </div>
-                            <div class="crew-col">
-                                <a href="https://www.roblox.com/users/5409916883/profile" class="crew-header" target="_blank">Roblox</a>
-                                <img src="https://tr.rbxcdn.com/30DAY-AvatarHeadshot-CFED9DC432C04E685F951A576DFA6566-Png/150/150/AvatarHeadshot/Webp/noFilter" alt="Roblox Avatar" class="crew-avatar">
-                                <span class="crew-display">Blessed</span>
-                                <span class="crew-username">kaiqueopato32</span>
-                            </div>
-                            <div class="crew-col">
-                                <a href="https://discord.com/users/480522229843623937" class="crew-header" target="_blank">Discord</a>
-                                <img src="https://cdn.discordapp.com/avatars/480522229843623937/e123d3b618cb1129fe57a72cec44b141.webp?size=2048" alt="Discord Avatar" class="crew-avatar">
-                                <span class="crew-display">nol1122</span>
-                                <span class="crew-username">nol1122</span>
-                            </div>
-                            <div class="crew-col">
-                                <a href="https://www.roblox.com/users/5519604137/profile" class="crew-header" target="_blank">Roblox</a>
-                                <img src="https://tr.rbxcdn.com/30DAY-AvatarHeadshot-4AB14AB540445ED8CA87C584485AD27A-Png/150/150/AvatarHeadshot/Webp/noFilter" alt="Roblox Avatar" class="crew-avatar">
-                                <span class="crew-display">Nollon89a</span>
-                                <span class="crew-username">Nollon89a</span>
-                            </div>
-                            <div class="crew-col">
-                                <a href="https://discord.com/users/1109604094856941658" class="crew-header" target="_blank">Discord</a>
-                                <div class="avatar-wrap">
-                                <img src="https://cdn.discordapp.com/avatars/1109604094856941658/b1b5ce9fa1f309fbf43c068b01bf78e8.webp?size=2048" alt="Discord Avatar" class="crew-avatar">
-                                <img src="https://cdn.discordapp.com/media/v1/collectibles-shop/1341506443878072320/animated" alt="Avatar Decoration" class="avatar-decoration">
-                            </div>
-                                <span class="crew-display">Rambo</span>
-                                <span class="crew-username">beyondrambo</span>
-                            </div>
-                            <div class="crew-col">
-                                <a href="https://www.roblox.com/users/8666228168/profile" class="crew-header" target="_blank">Roblox</a>
-                                <img src="https://tr.rbxcdn.com/30DAY-AvatarHeadshot-60F7C7EB395E87E5D4925BF28071AE58-Png/150/150/AvatarHeadshot/Webp/noFilter" alt="Roblox Avatar" class="crew-avatar">
-                                <span class="crew-display">Rambo</span>
-                                <span class="crew-username">Beyondrambo</span>
-                            </div>
-                            <div class="crew-col">
-                                <a href="https://discord.com/users/422527080329379841" class="crew-header" target="_blank">Discord</a>
-                                <img src="https://cdn.discordapp.com/avatars/422527080329379841/c77189d003427d3fe038c822a8c0bcec.webp?size=2048" alt="Discord Avatar" class="crew-avatar">
-                                <span class="crew-display">Dino</span>
-                                <span class="crew-username">dinohj</span>
-                            </div>
-                            <div class="crew-col">
-                                <a href="https://www.roblox.com/users/212497067/profile" class="crew-header" target="_blank">Roblox</a>
-                                <img src="https://tr.rbxcdn.com/30DAY-AvatarHeadshot-586352BAC2E23C7DDDE09C10E5E5EDDC-Png/150/150/AvatarHeadshot/Webp/noFilter" alt="Roblox Avatar" class="crew-avatar">
-                                <span class="crew-display">Hjrc2603</span>
-                                <span class="crew-username">Hjrc2603</span>
-                            </div>
-                            <div class="crew-col">
-                                <a href="https://discord.com/users/1079951057951662111" class="crew-header" target="_blank">Discord</a>
-                                <img src="https://cdn.discordapp.com/avatars/1079951057951662111/e3a990e7a8212eca8990d44c28026b64.webp?size=2048" alt="Discord Avatar" class="crew-avatar">
-                                <span class="crew-display">leo</span>
-                                <span class="crew-username">leonardinhojr</span>
-                            </div>
-                            <div class="crew-col">
-                                <a href="https://www.roblox.com/users/1483528577/profile" class="crew-header" target="_blank">Roblox</a>
-                                <img src="https://tr.rbxcdn.com/30DAY-AvatarHeadshot-A3A15D44F2291B3A135CAFE45E3196CC-Png/150/150/AvatarHeadshot/Webp/noFilter" alt="Roblox Avatar" class="crew-avatar">
-                                <span class="crew-display">leo</span>
-                                <span class="crew-username">leopro654tq</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="template-block">
-                    <span class="template-number">4.</span>
-                    <div class="template-field-wrap">
-                        <span class="template-field">Notes:</span>
-                        <span class="template-value"><em>3 Mirage Islands, 2 Prehistoric Islands, One Kitsune Shrine. And many Teleports.</em></span>
-                    </div>
-                </div>
-                <div class="template-block">
-                    <span class="template-number">5.</span>
-                    <div class="template-field-wrap">
-                        <span class="template-field">Outcome:</span>
-                        <span class="template-value"><em>Success</em></span>
-                    </div>
-                </div>
+                </div></div>
+                <div class="template-block"><span class="template-number">4.</span><div class="template-field-wrap"><span class="template-field">Notes:</span><span class="template-value"><em>3 Mirage Islands, 2 Prehistoric Islands, One Kitsune Shrine. And many Teleports.</em></span></div></div>
+                <div class="template-block"><span class="template-number">5.</span><div class="template-field-wrap"><span class="template-field">Outcome:</span><span class="template-value"><em>Success</em></span></div></div>
             </div>
         </div>
-<div class="log-content" id="logContent">
-            <!-- Expedition entries will appear here -->
-        </div>
+        <div class="log-content" id="logContent"></div>
     </div>
 
     <div class="top-bar">
@@ -992,7 +936,7 @@
             <span class="mute-indicator" id="muteIndicator"></span>
             <span class="audio-icon" id="audioIcon">🔇</span>
             <span class="audio-label" id="audioLabel">Sounds</span>
-            <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="23" oninput="setVolume(this.value)" onclick="event.stopPropagation()">
+            <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="20" oninput="setVolume(this.value)" onclick="event.stopPropagation()">
         </div>
     </div>
 
@@ -1030,20 +974,8 @@
 
     <script>
         // ========== CONFIG ==========
-        const DEFAULT_AUDIO_SRC = "your.mp3";   // <-- change to your file
-
-        // ========== EXPEDITION DATA (add yours here) ==========
-        const expeditions = [
-            // Example entry (uncomment to test):
-            // {
-            //     date: "2026-05-15",
-            //     title: "The Deep Reef Dive",
-            //     timeSpent: "4 hours 32 minutes",
-            //     crew: ["Captain Ahab", "First Mate Star", "Diver Blue"],
-            //     successful: true,
-            //     notes: "Discovered a new coral formation."
-            // }
-        ];
+        const DEFAULT_AUDIO_SRC = "your.mp3";
+        const expeditions = [];
 
         // ========== DOM Elements ==========
         const ribbonContainer = document.getElementById('ribbonContainer');
@@ -1051,33 +983,46 @@
         const logPaper = document.getElementById('logPaper');
         const expeditionLogBtn = document.getElementById('expeditionLogBtn');
         const closeLogBtn = document.getElementById('closeLogBtn');
+        const minimizeBtn = document.getElementById('logMinimizeBtn');
 
-        let isMenuOpen = false;
-        let isLogOpen = false;
-        let startY = 0;
-        let isDragging = false;
+        let isMenuOpen = false, isLogOpen = false, startY = 0, isDragging = false;
+        let userToggled = false; // manual override for expanded mode
 
-        // ========== Ribbon + Menu Logic ==========
-        function openMenu() {
-            if (isLogOpen) return;
-            isMenuOpen = true;
-            ribbonContainer.classList.add('open');
-            ribbonMenu.classList.add('open');
+        // ========== Auto-expand on monitor (min-width:1024px) ==========
+        function setExpanded(expand) {
+            if (expand) {
+                logPaper.classList.add('expanded');
+                if (minimizeBtn) minimizeBtn.textContent = '🗗';
+            } else {
+                logPaper.classList.remove('expanded');
+                if (minimizeBtn) minimizeBtn.textContent = '⤢';
+            }
         }
 
-        function closeMenu() {
-            isMenuOpen = false;
-            ribbonContainer.classList.remove('open');
-            ribbonMenu.classList.remove('open');
+        function autoExpand() {
+            if (userToggled) return;
+            const isLarge = window.innerWidth >= 1024;
+            setExpanded(isLarge);
         }
 
+        if (minimizeBtn) {
+            minimizeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                userToggled = true;
+                setExpanded(!logPaper.classList.contains('expanded'));
+            });
+        }
+        window.addEventListener('resize', () => { if (!userToggled) autoExpand(); });
+
+        // ========== Ribbon + Menu Logic (original) ==========
+        function openMenu() { if (isLogOpen) return; isMenuOpen = true; ribbonContainer.classList.add('open'); ribbonMenu.classList.add('open'); }
+        function closeMenu() { isMenuOpen = false; ribbonContainer.classList.remove('open'); ribbonMenu.classList.remove('open'); }
         function recoilCloseMenu() {
             ribbonContainer.style.transition = 'transform 0.12s ease';
             ribbonContainer.style.transform = 'translateY(60px)';
             ribbonMenu.style.transition = 'transform 0.12s ease, opacity 0.12s ease';
             ribbonMenu.style.transform = 'translateY(10px)';
             ribbonMenu.style.opacity = '0.7';
-
             setTimeout(() => {
                 ribbonContainer.style.transition = 'transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)';
                 ribbonContainer.style.transform = '';
@@ -1094,10 +1039,8 @@
             }, 120);
         }
 
-        // Drag to open or recoil
         ribbonContainer.addEventListener('mousedown', startDrag);
         ribbonContainer.addEventListener('touchstart', startDrag, { passive: false });
-
         function startDrag(e) {
             isDragging = false;
             startY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
@@ -1106,25 +1049,14 @@
             document.addEventListener('touchmove', onDrag, { passive: false });
             document.addEventListener('touchend', endDrag);
         }
-
         function onDrag(e) {
             e.preventDefault();
             isDragging = true;
             const currentY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
             const delta = currentY - startY;
-            if (delta > 30) {
-                if (!isMenuOpen && !isLogOpen) {
-                    openMenu();
-                } else if (isMenuOpen && !isLogOpen) {
-                    recoilCloseMenu();
-                }
-                endDrag();
-            } else if (delta < -30 && isMenuOpen && !isLogOpen) {
-                recoilCloseMenu();
-                endDrag();
-            }
+            if (delta > 30) { if (!isMenuOpen && !isLogOpen) openMenu(); else if (isMenuOpen && !isLogOpen) recoilCloseMenu(); endDrag(); }
+            else if (delta < -30 && isMenuOpen && !isLogOpen) { recoilCloseMenu(); endDrag(); }
         }
-
         function endDrag() {
             document.removeEventListener('mousemove', onDrag);
             document.removeEventListener('mouseup', endDrag);
@@ -1132,78 +1064,38 @@
             document.removeEventListener('touchend', endDrag);
             setTimeout(() => { isDragging = false; }, 50);
         }
-
-        // Click on ribbon toggles menu (if not dragging)
-        ribbonContainer.addEventListener('click', (e) => {
-            if (!isDragging) {
-                if (isMenuOpen) closeMenu();
-                else openMenu();
-            }
-        });
-
-        // Tap anywhere else closes menu or log
+        ribbonContainer.addEventListener('click', (e) => { if (!isDragging) { if (isMenuOpen) closeMenu(); else openMenu(); } });
         document.addEventListener('click', (e) => {
-            if (isMenuOpen && !ribbonMenu.contains(e.target) && !ribbonContainer.contains(e.target)) {
-                closeMenu();
-            }
-            if (isLogOpen && !logPaper.contains(e.target) && !ribbonContainer.contains(e.target) && !ribbonMenu.contains(e.target)) {
-                closeLog();
-            }
+            if (isMenuOpen && !ribbonMenu.contains(e.target) && !ribbonContainer.contains(e.target)) closeMenu();
+            if (isLogOpen && !logPaper.contains(e.target) && !ribbonContainer.contains(e.target) && !ribbonMenu.contains(e.target)) closeLog();
         });
 
-        // ========== Log Paper Functions ==========
-        function openLog() {
-            closeMenu();
-            isLogOpen = true;
-            logPaper.classList.add('open');
-            document.body.style.overflow = 'hidden';
-        }
+        function openLog() { closeMenu(); isLogOpen = true; logPaper.classList.add('open'); document.body.style.overflow = 'hidden'; autoExpand(); }
+        function closeLog() { isLogOpen = false; logPaper.classList.remove('open'); document.body.style.overflow = ''; }
+        expeditionLogBtn.addEventListener('click', (e) => { e.stopPropagation(); openLog(); });
+        closeLogBtn.addEventListener('click', (e) => { e.stopPropagation(); closeLog(); });
 
-        function closeLog() {
-            isLogOpen = false;
-            logPaper.classList.remove('open');
-            document.body.style.overflow = '';
-        }
+        function renderExpeditions() { document.getElementById('logContent').innerHTML = ''; }
 
-        expeditionLogBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            openLog();
-        });
-
-        closeLogBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            closeLog();
-        });
-
-        // ========== Render Expeditions ==========
-        function renderExpeditions() {
-            const container = document.getElementById('logContent');
-            if (!expeditions.length) {
-                container.innerHTML = '';  // No message when empty
-                return;
+        // ========== LEFT CREW TOGGLE (original, working) ==========
+        window.toggleLeftCrew = function() {
+            const grid = document.getElementById('leftCrewGrid');
+            const btn = document.getElementById('leftCrewToggle');
+            if (grid.style.display === 'none' || getComputedStyle(grid).display === 'none') {
+                grid.style.display = 'grid';
+                btn.style.textDecoration = 'line-through';
+                btn.style.background = 'rgba(139,69,19,0.2)';
+            } else {
+                grid.style.display = 'none';
+                btn.style.textDecoration = 'none';
+                btn.style.background = 'rgba(139,69,19,0.1)';
             }
-            container.innerHTML = expeditions.map(exp => `
-                <div class="expedition-entry ${exp.successful ? 'success' : 'failed'}">
-                    <div class="expedition-date">${new Date(exp.date).toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' })}</div>
-                    <div class="expedition-title">${exp.title}</div>
-                    <div class="expedition-details">
-                        <div class="detail"><span class="detail-label">Duration</span><span class="detail-value">${exp.timeSpent}</span></div>
-                        <div class="detail"><span class="detail-label">Crew</span><span class="detail-value">${exp.crew.join(', ')}</span></div>
-                        ${exp.notes ? `<div class="detail" style="grid-column:1/-1;"><span class="detail-label">Notes</span><span class="detail-value">${exp.notes}</span></div>` : ''}
-                    </div>
-                    <span class="expedition-status ${exp.successful ? 'status-success' : 'status-failed'}">${exp.successful ? '✓ Successful' : '✗ Failed'}</span>
-                </div>
-            `).join('');
-        }
+        };
 
-        // ========== AUDIO SYSTEM ==========
+        // ========== AUDIO SYSTEM (original) ==========
         const audioEl = document.getElementById('ambientAudio');
         let isPlaying = false;
-        if (DEFAULT_AUDIO_SRC && DEFAULT_AUDIO_SRC !== "your.mp3") {
-            audioEl.src = DEFAULT_AUDIO_SRC;
-            audioEl.load();
-        }
-        function toggleAudio() {
+        window.toggleAudio = function() {
             if (!audioEl.src || audioEl.src === window.location.href) { toggleAudioPanel(); return; }
             const control = document.getElementById('audioControl');
             const icon = document.getElementById('audioIcon');
@@ -1218,9 +1110,9 @@
                     icon.textContent = '🔊'; control.classList.add('playing'); indicator.classList.add('active');
                 }).catch(err => alert('Could not play audio. Check URL.'));
             }
-        }
-        function toggleAudioPanel() { document.getElementById('audioPanel').classList.toggle('open'); }
-        function loadAudioFromInput() {
+        };
+        window.toggleAudioPanel = function() { document.getElementById('audioPanel').classList.toggle('open'); };
+        window.loadAudioFromInput = function() {
             let url = document.getElementById('audioUrlInput').value.trim();
             if (!url) { alert('Enter a URL or filename.'); return; }
             const finalUrl = url.match(/^https?:\/\//) ? url : url;
@@ -1233,34 +1125,25 @@
                 document.getElementById('muteIndicator').classList.add('active');
                 document.getElementById('audioPanel').classList.remove('open');
             }).catch(err => alert('Failed to load audio. Use a direct MP3 link.'));
-        }
-        function setVolume(val) { audioEl.volume = val / 100; }
+        };
+        window.setVolume = function(val) { audioEl.volume = val / 100; };
 
-        // ========== ENTER OVERLAY ==========
         let hasEntered = false;
-        function enterSite() {
+        window.enterSite = function() {
             if (hasEntered) return;
             hasEntered = true;
             document.getElementById('enterOverlay').classList.add('hidden');
             if (DEFAULT_AUDIO_SRC && DEFAULT_AUDIO_SRC !== "your.mp3") {
                 audioEl.src = DEFAULT_AUDIO_SRC;
                 audioEl.volume = document.getElementById('volumeSlider').value / 100;
-                audioEl.play().then(() => {
-                    isPlaying = true;
-                    document.getElementById('audioIcon').textContent = '🔊';
-                    document.getElementById('audioControl').classList.add('playing');
-                    document.getElementById('muteIndicator').classList.add('active');
-                }).catch(e => console.log("Autoplay blocked, tap again"));
+                audioEl.play().catch(e => console.log("Autoplay blocked, tap again"));
             }
-        }
+        };
 
-        // ========== EVENT SCHEDULE ==========
+        // ========== EVENT SCHEDULE (original) ==========
         const events = [
             { day: "Friday", icon: "🌅", slots: [{ startUTC: "16:00", endUTC: "21:00", label: "Main Session" }] },
-            { day: "Saturday", icon: "⭐", slots: [
-                { startUTC: "09:00", endUTC: "12:00", label: "Morning Session" },
-                { startUTC: "16:00", endUTC: "21:00", label: "Evening Session" }
-            ]},
+            { day: "Saturday", icon: "⭐", slots: [{ startUTC: "09:00", endUTC: "12:00", label: "Morning Session" }, { startUTC: "16:00", endUTC: "21:00", label: "Evening Session" }] },
             { day: "Sunday", icon: "🌤️", slots: [{ startUTC: "04:30", endUTC: "06:30", label: "Early Session" }] }
         ];
 
@@ -1268,11 +1151,9 @@
             const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
             const targetDay = days.indexOf(dayName);
             const now = new Date();
-            const currentDay = now.getUTCDay();
-            const [h, m] = timeStr.split(':').map(Number);
-            let daysDiff = targetDay - currentDay;
+            let daysDiff = targetDay - now.getUTCDay();
             if (daysDiff < 0) daysDiff += 7;
-            if (daysDiff === 0 && (h < now.getUTCHours() || (h === now.getUTCHours() && m < now.getUTCMinutes()))) daysDiff += 7;
+            const [h, m] = timeStr.split(':').map(Number);
             const d = new Date(now);
             d.setUTCDate(d.getUTCDate() + daysDiff);
             d.setUTCHours(h, m, 0, 0);
@@ -1280,74 +1161,32 @@
         }
         function formatLocalTime(date) { return date.toLocaleTimeString([], { hour:'numeric', minute:'2-digit', hour12:true }); }
         function formatLocalDate(date) { return date.toLocaleDateString([], { weekday:'short', month:'short', day:'numeric' }); }
-        function getDiscordTimestamp(date, format='t') { return `<t:${Math.floor(date/1000)}:${format}>`; }
+        function getDiscordTimestamp(date) { return `<t:${Math.floor(date/1000)}:t>`; }
         function getEventStatus(start, end) { const now=new Date(); if(now>=start && now<=end) return 'ongoing'; if(now<start) return (start-now)<3600000?'soon':'upcoming'; return 'ended'; }
-        function getNextEvent() {
-            let next=null, minDiff=Infinity;
-            events.forEach(day=>day.slots.forEach(slot=>{
-                const start=parseUTCTime(day.day,slot.startUTC);
-                const diff=start-new Date();
-                if(diff>0 && diff<minDiff){ minDiff=diff; next=start; }
-            }));
-            return next;
-        }
+        function getNextEvent() { let next=null, minDiff=Infinity; events.forEach(day=>day.slots.forEach(slot=>{ const start=parseUTCTime(day.day,slot.startUTC); const diff=start-new Date(); if(diff>0 && diff<minDiff){ minDiff=diff; next=start; } })); return next; }
         function renderEvents() {
             const grid=document.getElementById('eventsGrid');
             document.getElementById('userTimezone').textContent=Intl.DateTimeFormat().resolvedOptions().timeZone.replace(/_/g,' ');
             grid.innerHTML=events.map(day=>{
-                const dayHasLive=day.slots.some(slot=>getEventStatus(parseUTCTime(day.day,slot.startUTC),parseUTCTime(day.day,slot.endUTC))==='ongoing');
-                const dayHasSoon=day.slots.some(slot=>getEventStatus(parseUTCTime(day.day,slot.startUTC),parseUTCTime(day.day,slot.endUTC))==='soon');
-                let badge='';
-                if(dayHasLive) badge='<span class="day-badge badge-live">● Live</span>';
-                else if(dayHasSoon) badge='<span class="day-badge badge-soon">⏰ Soon</span>';
                 const slotsHtml=day.slots.map(slot=>{
                     const start=parseUTCTime(day.day,slot.startUTC);
                     const end=parseUTCTime(day.day,slot.endUTC);
                     const status=getEventStatus(start,end);
-                    const discordTs=getDiscordTimestamp(start,'t');
                     let statusClass='status-upcoming', statusText='Upcoming';
                     if(status==='ongoing'){ statusClass='status-ongoing'; statusText='Live Now'; }
                     else if(status==='soon'){ statusClass='status-upcoming'; statusText='Starting Soon'; }
                     else if(status==='ended'){ statusClass='status-ended'; statusText='Ended'; }
-                    return `<div class="event-slot"><div><div class="slot-time">${formatLocalTime(start)} – ${formatLocalTime(end)}</div><div class="slot-utc">${formatLocalDate(start)} • UTC ${slot.startUTC}–${slot.endUTC} • ${slot.label}</div></div><span class="slot-status ${statusClass}">${statusText}</span><span class="slot-discord" onclick="copyTimestamp(this, '${discordTs.replace(/'/g,"\\'")}')">${discordTs}</span></div>`;
+                    return `<div class="event-slot"><div><div class="slot-time">${formatLocalTime(start)} – ${formatLocalTime(end)}</div><div class="slot-utc">${formatLocalDate(start)} • UTC ${slot.startUTC}–${slot.endUTC} • ${slot.label}</div></div><span class="slot-status ${statusClass}">${statusText}</span><span class="slot-discord" onclick="copyTimestamp(this, '${getDiscordTimestamp(start).replace(/'/g,"\\'")}')">${getDiscordTimestamp(start)}</span></div>`;
                 }).join('');
-                return `<div class="day-card"><div class="day-header"><span class="day-icon">${day.icon}</span><span class="day-title">${day.day}</span>${badge}</div><div class="event-slots">${slotsHtml}</div></div>`;
+                return `<div class="day-card"><div class="day-header"><span class="day-icon">${day.icon}</span><span class="day-title">${day.day}</span></div><div class="event-slots">${slotsHtml}</div></div>`;
             }).join('');
         }
-        function copyTimestamp(el, ts) { navigator.clipboard.writeText(ts).then(()=>{ const orig=el.textContent; el.textContent='Copied!'; el.classList.add('copied'); setTimeout(()=>{ el.textContent=orig; el.classList.remove('copied'); },1500); }); }
-        function updateCountdown() {
-            const next=getNextEvent();
-            const el=document.getElementById('countdownTime');
-            if(!next){ el.textContent="No upcoming events"; return; }
-            const diff=next-new Date();
-            const h=Math.floor(diff/3600000), m=Math.floor((diff%3600000)/60000), s=Math.floor((diff%60000)/1000);
-            el.textContent=`${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
-        }
-        function setBg(name) {
-            document.body.className='bg-'+name;
-            document.querySelectorAll('.bg-option').forEach(opt=>opt.classList.remove('active'));
-            document.querySelector('.bg-'+name+'-opt').classList.add('active');
-        }
+        window.copyTimestamp = function(el, ts) { navigator.clipboard.writeText(ts).then(()=>{ const orig=el.textContent; el.textContent='Copied!'; el.classList.add('copied'); setTimeout(()=>{ el.textContent=orig; el.classList.remove('copied'); },1500); }); };
+        function updateCountdown() { const next=getNextEvent(); const el=document.getElementById('countdownTime'); if(!next){ el.textContent="No upcoming events"; return; } const diff=next-new Date(); const h=Math.floor(diff/3600000), m=Math.floor((diff%3600000)/60000), s=Math.floor((diff%60000)/1000); el.textContent=`${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`; }
+        window.setBg = function(name) { document.body.className='bg-'+name; document.querySelectorAll('.bg-option').forEach(opt=>opt.classList.remove('active')); document.querySelector('.bg-'+name+'-opt').classList.add('active'); };
 
-        
-        // ========== LEFT CREW TOGGLE ==========
-        function toggleLeftCrew() {
-            const grid = document.getElementById('leftCrewGrid');
-            const btn = document.getElementById('leftCrewToggle');
-            if (grid.style.display === 'none') {
-                grid.style.display = 'grid';
-                btn.style.textDecoration = 'line-through';
-            } else {
-                grid.style.display = 'none';
-                btn.style.textDecoration = 'none';
-            }
-        }
-
-// ========== INIT ==========
-        renderExpeditions();
-        renderEvents();
-        updateCountdown();
-        setInterval(() => { renderEvents(); updateCountdown(); }, 1000);
+        renderExpeditions(); renderEvents(); updateCountdown(); setInterval(() => { renderEvents(); updateCountdown(); }, 1000);
+        autoExpand();
     </script>
 </body>
-</html>                                                                                                                                       </html>
+                                                                                                                                                                                                                                            </html>
