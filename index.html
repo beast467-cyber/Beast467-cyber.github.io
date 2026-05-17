@@ -1133,7 +1133,7 @@
             if (hasEntered) return;
             hasEntered = true;
             document.getElementById('enterOverlay').classList.add('hidden');
-            if (DEFAULT_AUDIO_SRC && DEFAULT_AUDIO_SRC !== "your.mp3") {
+            if (DEFAULT_AUDIO_SRC && DEFAULT_AUDIO_SRC !== "https://files.catbox.moe/mttzfu.mp3") {
                 audioEl.src = DEFAULT_AUDIO_SRC;
                 audioEl.volume = document.getElementById('volumeSlider').value / 100;
                 audioEl.play().catch(e => console.log("Autoplay blocked, tap again"));
