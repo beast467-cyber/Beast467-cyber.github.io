@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>🌊 Discord Event Schedule</title>
     <style>
         :root {
@@ -12,6 +12,10 @@
             --text-secondary: #94a3b8;
             --accent: #38bdf8;
             --accent-glow: rgba(56, 189, 248, 0.3);
+            --ribbon-color: #c41e3a;
+            --ribbon-dark: #8b1528;
+            --paper-bg: #f5e6c8;
+            --paper-text: #2d1b0e;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -24,6 +28,7 @@
             background-position: center;
             background-attachment: fixed;
             transition: background-image 0.8s ease;
+            overflow-x: hidden;
         }
 
         .bg-ocean { background-image: linear-gradient(rgba(0,20,40,0.7), rgba(0,20,40,0.8)), url('https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=1920&q=80'); }
@@ -51,10 +56,7 @@
             visibility: hidden;
             pointer-events: none;
         }
-        .enter-overlay .enter-icon {
-            font-size: 4rem;
-            animation: pulse 2s infinite;
-        }
+        .enter-overlay .enter-icon { font-size: 4rem; animation: pulse 2s infinite; }
         .enter-overlay h2 {
             font-size: 2.2rem;
             font-weight: 800;
@@ -63,13 +65,7 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
-        .enter-overlay p {
-            color: var(--text-secondary);
-            font-size: 1.1rem;
-            max-width: 400px;
-            text-align: center;
-            line-height: 1.5;
-        }
+        .enter-overlay p { color: var(--text-secondary); font-size: 1.1rem; max-width: 400px; text-align: center; line-height: 1.5; }
         .enter-overlay .tap-hint {
             margin-top: 16px;
             padding: 12px 32px;
@@ -82,11 +78,281 @@
             box-shadow: 0 0 20px var(--accent-glow);
         }
 
-        /* ===== TOP BAR (prevents overlap) ===== */
+        /* ===== RIBBON WRAPPER ===== */
+        .ribbon-wrapper {
+            position: fixed;
+            top: 0;
+            left: 16px;
+            z-index: 1002;
+        }
+
+        /* ===== RIBBON MENU ===== */
+        .ribbon-menu {
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 0 0 12px 12px;
+            padding: 8px 4px;
+            width: 180px;
+            transform: translateY(-100%);
+            opacity: 0;
+            transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            z-index: 2;
+            pointer-events: none;
+        }
+        .ribbon-menu.open {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .ribbon-menu::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), #818cf8);
+        }
+
+        .menu-item {
+            padding: 12px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            border: 1px solid transparent;
+        }
+        .menu-item:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: var(--glass-border);
+        }
+        .menu-item-icon { font-size: 1.2rem; }
+
+        /* ===== RIBBON CONTAINER (handle) ===== */
+        .ribbon-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            cursor: grab;
+            user-select: none;
+            touch-action: none;
+            transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 1;
+        }
+        .ribbon-container:active { cursor: grabbing; }
+        .ribbon-container.open {
+            transform: translateY(78px);
+        }
+
+        /* BRIDGE – seamlessly connects ribbon to menu */
+        .ribbon-container.open::before {
+            content: '';
+            position: absolute;
+            bottom: calc(100% - 1px);
+            left: 0;
+            width: 100%;
+            height: 19px;
+            background: var(--ribbon-dark);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .ribbon-tail {
+            width: 28px;
+            height: 18px;
+            background: linear-gradient(180deg, var(--ribbon-dark), var(--ribbon-color));
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        .ribbon-tail::after {
+            content: '';
+            position: absolute;
+            bottom: -9px;
+            left: 0;
+            width: 0;
+            height: 0;
+            border-left: 14px solid var(--ribbon-color);
+            border-right: 14px solid var(--ribbon-color);
+            border-bottom: 10px solid transparent;
+        }
+
+        /* ===== LOG PAPER ===== */
+        .log-paper {
+            position: fixed;
+            top: 0;
+            left: 16px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 85vh;
+            background: var(--paper-bg);
+            color: var(--paper-text);
+            border-radius: 0 0 16px 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(139, 69, 19, 0.2);
+            z-index: 1003;
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex;
+            flex-direction: column;
+            transform: translateY(-100%);
+            pointer-events: none;
+            overflow: hidden;
+        }
+        .log-paper.open {
+            transform: translateY(24px);
+            pointer-events: auto;
+            overflow-y: auto;
+        }
+        .log-paper::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: repeating-linear-gradient(
+                90deg,
+                var(--ribbon-color) 0px,
+                var(--ribbon-color) 20px,
+                var(--ribbon-dark) 20px,
+                var(--ribbon-dark) 40px
+            );
+        }
+        .log-header {
+            padding: 20px 24px 12px;
+            border-bottom: 2px dashed #8b4513;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 12px;
+            flex-shrink: 0;
+            background: var(--paper-bg);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .log-header h2 {
+            font-family: 'Georgia', serif;
+            font-size: 1.5rem;
+            color: #5c2e0e;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .log-close {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px solid #8b4513;
+            background: transparent;
+            color: #5c2e0e;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            order: -1;
+        }
+        .log-close:hover {
+            background: #8b4513;
+            color: var(--paper-bg);
+        }
+        .log-content {
+            padding: 20px 24px;
+        }
+        .log-content::-webkit-scrollbar { width: 8px; }
+        .log-content::-webkit-scrollbar-track { background: rgba(139, 69, 19, 0.1); border-radius: 4px; }
+        .log-content::-webkit-scrollbar-thumb { background: #8b4513; border-radius: 4px; }
+
+        .expedition-entry {
+            background: rgba(139, 69, 19, 0.08);
+            border: 1px solid rgba(139, 69, 19, 0.2);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            position: relative;
+        }
+        .expedition-entry::before {
+            content: '';
+            position: absolute;
+            top: 12px;
+            left: -6px;
+            width: 12px;
+            height: 12px;
+            background: var(--paper-bg);
+            border: 2px solid #8b4513;
+            border-radius: 50%;
+        }
+        .expedition-entry.success::before { background: #22c55e; border-color: #16a34a; }
+        .expedition-entry.failed::before { background: #ef4444; border-color: #dc2626; }
+        .expedition-date {
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            color: #8b4513;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+        .expedition-title {
+            font-family: 'Georgia', serif;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #5c2e0e;
+            margin-bottom: 8px;
+        }
+        .expedition-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+        .expedition-details .detail {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .expedition-details .detail-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #8b4513;
+            font-weight: 600;
+        }
+        .expedition-details .detail-value { color: #2d1b0e; font-weight: 500; }
+        .expedition-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 10px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+        .status-success { background: rgba(34, 197, 94, 0.15); color: #15803d; }
+        .status-failed { background: rgba(239, 68, 68, 0.15); color: #b91c1c; }
+        .log-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: #8b4513;
+            font-style: italic;
+            font-family: 'Georgia', serif;
+        }
+
+        /* ===== TOP BAR ===== */
         .top-bar {
             position: fixed;
             top: 0; left: 0; right: 0;
-            z-index: 1000;
+            z-index: 999;
             display: flex;
             align-items: flex-start;
             justify-content: space-between;
@@ -95,7 +361,6 @@
         }
         .top-bar > * { pointer-events: auto; }
 
-        /* Background selector - LEFT */
         .bg-selector {
             background: var(--glass-bg);
             backdrop-filter: blur(20px);
@@ -104,6 +369,7 @@
             padding: 10px;
             display: flex;
             gap: 8px;
+            margin-left: 56px;
         }
         .bg-option {
             width: 36px; height: 36px;
@@ -111,7 +377,6 @@
             border: 2px solid transparent;
             cursor: pointer;
             transition: all 0.3s ease;
-            flex-shrink: 0;
         }
         .bg-option:hover { transform: scale(1.15); }
         .bg-option.active { border-color: var(--accent); box-shadow: 0 0 12px var(--accent-glow); }
@@ -121,7 +386,6 @@
         .bg-aurora-opt { background: linear-gradient(135deg, #064e3b, #065f46); }
         .bg-storm-opt { background: linear-gradient(135deg, #374151, #1f2937); }
 
-        /* Audio control - RIGHT */
         .audio-control {
             background: var(--glass-bg);
             backdrop-filter: blur(20px);
@@ -134,7 +398,6 @@
             cursor: pointer;
             transition: all 0.3s ease;
             user-select: none;
-            flex-shrink: 0;
             position: relative;
         }
         .audio-control:hover { background: rgba(255,255,255,0.15); transform: scale(1.05); }
@@ -155,8 +418,6 @@
             border-radius: 50%;
             cursor: pointer;
         }
-
-        /* Mute indicator (green dot) */
         .mute-indicator {
             position: absolute;
             top: -3px;
@@ -171,12 +432,11 @@
         }
         .mute-indicator.active { display: block; }
 
-        /* Audio source panel - RIGHT, below control */
         .audio-source-panel {
             position: fixed;
             top: 72px;
             right: 20px;
-            z-index: 999;
+            z-index: 998;
             background: var(--glass-bg);
             backdrop-filter: blur(20px);
             border: 1px solid var(--glass-border);
@@ -222,9 +482,8 @@
         }
         .audio-source-panel button.primary:hover { opacity: 0.9; }
 
-        /* Main container & cards (fully functional) */
+        /* Main container */
         .container { max-width: 900px; margin: 0 auto; padding: 100px 20px 40px; }
-
         .header { text-align: center; margin-bottom: 40px; }
         .header h1 {
             font-size: 2.8rem; font-weight: 800;
@@ -245,7 +504,6 @@
             margin-top: 12px;
             backdrop-filter: blur(10px);
         }
-
         .events-grid { display: flex; flex-direction: column; gap: 20px; }
         .day-card {
             background: var(--glass-bg);
@@ -265,7 +523,6 @@
         }
         .day-card:hover::before { opacity: 1; }
         .day-card:hover { transform: translateY(-2px); box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
-
         .day-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
         .day-icon { font-size: 2rem; }
         .day-title { font-size: 1.5rem; font-weight: 700; }
@@ -326,8 +583,18 @@
         }
         .countdown-label { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 8px; }
         .countdown-time { font-size: 2rem; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--accent); }
-
         .footer { text-align: center; margin-top: 40px; padding: 20px; color: var(--text-secondary); font-size: 0.85rem; }
+        .wave-container {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            height: 60px; overflow: hidden; pointer-events: none; z-index: -1; opacity: 0.3;
+        }
+        .wave {
+            position: absolute; bottom: 0; left: 0; width: 200%; height: 100%;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%23ffffff' fill-opacity='0.1' d='M0,192L48,197.3C96,203,192,213,288,229.3C384,245,480,267,576,250.7C672,235,768,181,864,181.3C960,181,1056,235,1152,234.7C1248,235,1344,181,1392,154.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E");
+            background-size: 50% 100%;
+            animation: wave 15s linear infinite;
+        }
+        @keyframes wave { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
 
         @media (max-width: 600px) {
             .enter-overlay h2 { font-size: 1.6rem; }
@@ -341,21 +608,159 @@
             .audio-label { display: none; }
             .volume-slider { width: 50px; }
             .bg-option { width: 30px; height: 30px; }
+            .bg-selector { margin-left: 48px; padding: 8px; gap: 6px; }
             .audio-source-panel { width: calc(100vw - 28px); right: 14px; top: 64px; }
+            .log-paper { width: calc(100% - 32px); left: 16px; max-height: 85vh; }
+            .log-paper.open { transform: translateY(44px); }
+            .ribbon-wrapper { left: 12px; }
+            .ribbon-tail { width: 24px; }
+            .ribbon-tail::after {
+                border-left: 12px solid var(--ribbon-color);
+                border-right: 12px solid var(--ribbon-color);
+                border-bottom: 10px solid transparent;
+            }
+            .ribbon-menu { width: 160px; }
+            .ribbon-container.open::before { width: 24px; height: 14px; }
+        
+            .crew-grid { grid-template-columns: 1fr; gap: 16px; padding: 12px; }
+            .crew-avatar { width: 56px; height: 56px; }
+            .crew-display { font-size: 1rem; }
         }
 
-        .wave-container {
-            position: fixed; bottom: 0; left: 0; right: 0;
-            height: 60px; overflow: hidden; pointer-events: none; z-index: -1; opacity: 0.3;
+        /* ===== LOG TEMPLATE ===== */
+        .log-template {
+            border-bottom: 2px dashed #8b4513;
+            padding: 20px 24px;
+            background: rgba(139, 69, 19, 0.05);
         }
-        .wave {
-            position: absolute; bottom: 0; left: 0; width: 200%; height: 100%;
-            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%23ffffff' fill-opacity='0.1' d='M0,192L48,197.3C96,203,192,213,288,229.3C384,245,480,267,576,250.7C672,235,768,181,864,181.3C960,181,1056,235,1152,234.7C1248,235,1344,181,1392,154.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E");
-            background-size: 50% 100%;
-            animation: wave 15s linear infinite;
+        .log-template-body {
+            font-family: 'Great Vibes', cursive;
+            font-size: 1.15rem;
+            color: #2d1b0e;
+            line-height: 1.6;
         }
-        @keyframes wave { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        .log-template-body .template-field {
+            color: #8b4513;
+            font-weight: 600;
+        }
+
+        /* ===== TEMPLATE FIELD BLOCKS ===== */
+        .template-block {
+            margin-bottom: 1.2em;
+            display: flex;
+            gap: 10px;
+        }
+        .template-block:last-child {
+            margin-bottom: 0;
+        }
+        .template-number {
+            font-family: 'Great Vibes', cursive;
+            font-size: 1.15rem;
+            color: #8b4513;
+            min-width: 28px;
+            text-align: right;
+            line-height: 1.4;
+            user-select: none;
+        }
+        .template-field-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+        }
+        .template-value {
+            font-style: italic;
+            display: block;
+        }
+
+        /* ===== CREW MEMBERS GRID ===== */
+        .crew-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 8px;
+            padding: 14px;
+            background: rgba(139, 69, 19, 0.06);
+            border: 1px dashed rgba(139, 69, 19, 0.25);
+            border-radius: 12px;
+        }
+        .crew-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 6px;
+        }
+        .crew-header {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #8b4513;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+            transition: opacity 0.2s ease;
+        }
+        .crew-header:hover {
+            text-decoration: underline;
+            opacity: 0.8;
+        }
+        .crew-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #8b4513;
+            background: #f5e6c8;
+        }
+        .crew-display {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #2d1b0e;
+            line-height: 1.2;
+        }
+        .crew-username {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-size: 0.85rem;
+            font-weight: 400;
+            color: #5c2e0e;
+            line-height: 1.2;
+        }
+
+        /* === FINAL FIX: move only the crew content left, keep label aligned === */
+        .log-template-body .template-block:nth-child(3) .template-field-wrap > :not(:first-child) {
+            margin-left: -30px;           /* shift crew grid, button, and second grid left */
+            width: calc(100% + 30px);     /* prevent clipping and maintain full width */
+        }
+        /* Ensure the crew grid keeps its rounded corners */
+        .log-template-body .template-block:nth-child(3) .crew-grid {
+            border-radius: 12px;
+        }
+
+        /* Avatar Decoration Styles */
+        .avatar-wrap {
+            position: relative;
+            display: inline-block;
+            width: fit-content;
+            margin: 0 auto;
+        }
+        .avatar-decoration {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 140%;
+            height: 140%;
+            pointer-events: none;
+            object-fit: contain;
+            z-index: 2;
+        }
     </style>
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+    <base target="_blank">
+<base target="_blank">
 </head>
 <body class="bg-ocean">
 
@@ -363,12 +768,219 @@
     <div class="enter-overlay" id="enterOverlay" onclick="enterSite()">
         <div class="enter-icon">🌊</div>
         <h2>Discord Event Schedule</h2>
-        <p>Tap anywhere to enter.</p>
+        <p>Tap anywhere to enter with ambient sound, or continue silently.</p>
         <div class="tap-hint">Tap to Enter</div>
     </div>
 
+    <!-- RIBBON + MENU -->
+    <div class="ribbon-wrapper">
+        <div class="ribbon-menu" id="ribbonMenu">
+            <div class="menu-item" id="expeditionLogBtn">
+                <span class="menu-item-icon">📜</span>
+                <span>Expedition Log</span>
+            </div>
+        </div>
+        <div class="ribbon-container" id="ribbonContainer">
+            <div class="ribbon-tail"></div>
+        </div>
+    </div>
+
+    <!-- Log Paper -->
+    <div class="log-paper" id="logPaper">
+        <div class="log-header">
+            <button class="log-close" id="closeLogBtn">✕</button>
+            <h2>Expedition Log</h2>
+        </div>
+                <div class="log-template">
+            <div class="log-template-body">
+                <div class="template-block">
+                    <span class="template-number">1.</span>
+                    <div class="template-field-wrap">
+                        <span class="template-field">Date:</span>
+                        <span class="template-value"><em>May 16, 2026 - 9:35 PM</em></span>
+                    </div>
+                </div>
+                <div class="template-block">
+                    <span class="template-number">2.</span>
+                    <div class="template-field-wrap">
+                        <span class="template-field">Time Spent:</span>
+                        <span class="template-value"><em>2 hours 21 minutes</em></span>
+                    </div>
+                </div>
+                <div class="template-block">
+                    <span class="template-number">3.</span>
+                    <div class="template-field-wrap">
+                        <span class="template-field">Crew Members:</span>
+                        <div class="crew-grid">
+                            <div class="crew-col">
+                                <a href="https://discord.com/users/839071403960959008" class="crew-header" target="_blank">Discord</a>
+                                <img src="https://cdn.discordapp.com/avatars/839071403960959008/f4688b8fd1420a04f8f96852eea7b7bf.webp?size=2048" alt="Discord Avatar" class="crew-avatar">
+                                <span class="crew-display">Groundbreaker</span>
+                                <span class="crew-username">groundbreaker_</span>
+                            </div>
+                            <div class="crew-col">
+                                <a href="https://www.roblox.com/users/1303717778/profile" class="crew-header" target="_blank">Roblox</a>
+                                <img src="https://tr.rbxcdn.com/30DAY-AvatarHeadshot-C8E8897A27DB8A7CD1A321D34EEA094E-Png/150/150/AvatarHeadshot/Webp/noFilter" alt="Roblox Avatar" class="crew-avatar">
+                                <span class="crew-display">admindurian</span>
+                                <span class="crew-username">admindurian</span>
+                            </div>
+                            <div class="crew-col">
+                                <a href="https://discord.com/users/1140537569948479540" class="crew-header" target="_blank">Discord</a>
+                                <div class="avatar-wrap">
+                                <img src="https://cdn.discordapp.com/avatars/1140537569948479540/694f5934a03acf77127722d6b4b6cc04.webp?size=2048" alt="Discord Avatar" class="crew-avatar">
+                                <img src="https://cdn.discordapp.com/media/v1/collectibles-shop/1298033986622328842/animated" alt="Avatar Decoration" class="avatar-decoration">
+                            </div>
+                                <span class="crew-display">! 𝐊ᴀᴋᴀʀᴏᴛ</span>
+                                <span class="crew-username">kakarot690</span>
+                            </div>
+                            <div class="crew-col">
+                                <a href="https://www.roblox.com/users/7100267472/profile" class="crew-header" target="_blank">Roblox</a>
+                                <img src="https://tr.rbxcdn.com/30DAY-AvatarHeadshot-CB2E873B83FFE43D4E4533B879BB1510-Png/150/150/AvatarHeadshot/Webp/noFilter" alt="Roblox Avatar" class="crew-avatar">
+                                <span class="crew-display">Kakarot</span>
+                                <span class="crew-username">astro6902</span>
+                            </div>
+                            <div class="crew-col">
+                                <a href="https://discord.com/users/700906353689886770" class="crew-header" target="_blank">Discord</a>
+                                <div class="avatar-wrap">
+                                <img src="https://cdn.discordapp.com/avatars/700906353689886770/3166354a5bdf55e135f02a414a1b083e.webp?size=2048" alt="Discord Avatar" class="crew-avatar">
+                                <img src="https://cdn.discordapp.com/media/v1/collectibles-shop/1479187698768937010/animated" alt="Avatar Decoration" class="avatar-decoration">
+                            </div>
+                                <span class="crew-display">VnNhan</span>
+                                <span class="crew-username">vnnhan</span>
+                            </div>
+                            <div class="crew-col">
+                                <a href="https://www.roblox.com/users/477116811/profile" class="crew-header" target="_blank">Roblox</a>
+                                <img src="https://tr.rbxcdn.com/30DAY-AvatarHeadshot-9871DE686EEA4AF897C22FF6653227BF-Png/150/150/AvatarHeadshot/Webp/noFilter" alt="Roblox Avatar" class="crew-avatar">
+                                <span class="crew-display">CharlesTrarick</span>
+                                <span class="crew-username">bipro2008</span>
+                            </div>
+                            <div class="crew-col">
+                                <a href="https://discord.com/users/1188838398782361656" class="crew-header" target="_blank">Discord</a>
+                                <img src="https://cdn.discordapp.com/avatars/1188838398782361656/a_539dea7b9ca5d258b920858bd41cfcc9.webp?size=2048&animated=true" alt="Discord Avatar" class="crew-avatar">
+                                <span class="crew-display">𝒹𝒶𝓃</span>
+                                <span class="crew-username">guy_i</span>
+                            </div>
+                            <div class="crew-col">
+                                <a href="https://www.roblox.com/users/924095616/profile" class="crew-header" target="_blank">Roblox</a>
+                                <img src="https://tr.rbxcdn.com/30DAY-AvatarHeadshot-49A2468AD35764F73076338A9F54FF3A-Png/150/150/AvatarHeadshot/Webp/noFilter" alt="Roblox Avatar" class="crew-avatar">
+                                <span class="crew-display">i_i</span>
+                                <span class="crew-username">DAIPRO2019</span>
+                            </div>
+                            <div class="crew-col">
+                                <a href="https://discord.com/users/1158134373925785650" class="crew-header" target="_blank">Discord</a>
+                                <img src="https://cdn.discordapp.com/embed/avatars/0.png" alt="Discord Avatar" class="crew-avatar">
+                                <span class="crew-display">ᡕᠵデ气亠</span>
+                                <span class="crew-username">someone20771</span>
+                            </div>
+                            <div class="crew-col">
+                                <a href="https://www.roblox.com/users/3480921898/profile" class="crew-header" target="_blank">Roblox</a>
+                                <img src="https://tr.rbxcdn.com/30DAY-AvatarHeadshot-30D9E761B53C46684E76E4CE5FD45602-Png/150/150/AvatarHeadshot/Webp/noFilter" alt="Roblox Avatar" class="crew-avatar">
+                                <span class="crew-display">DualAkimboAK47km</span>
+                                <span class="crew-username">Pop_Cat09283</span>
+                            </div>
+                        </div>
+                        <button id="leftCrewToggle" style="margin-top:12px;padding:8px 16px;background:rgba(139,69,19,0.1);border:1px dashed #8b4513;border-radius:8px;color:#5c2e0e;font-family:'Georgia',serif;font-size:0.95rem;cursor:pointer;width:100%;transition:background 0.2s;" onclick="toggleLeftCrew()">Left Crew Members</button>
+<div class="crew-grid" id="leftCrewGrid" style="display:none;">
+                            <div class="crew-col">
+                                <a href="https://discord.com/users/806607585943486534" class="crew-header" target="_blank">Discord</a>
+                                <img src="https://cdn.discordapp.com/avatars/806607585943486534/62e72e2366f2f97518856692f7288964.webp?size=2048" alt="Discord Avatar" class="crew-avatar">
+                                <span class="crew-display">emoji3x</span>
+                                <span class="crew-username">emoji3x</span>
+                            </div>
+                            <div class="crew-col">
+                                <a href="https://www.roblox.com/users/348787247/profile" class="crew-header" target="_blank">Roblox</a>
+                                <img src="https://tr.rbxcdn.com/30DAY-AvatarHeadshot-C100B3D61ED0A961149E06B52C9EA83B-Png/150/150/AvatarHeadshot/Webp/noFilter" alt="Roblox Avatar" class="crew-avatar">
+                                <span class="crew-display">tooemo</span>
+                                <span class="crew-username">tooemo</span>
+                            </div>
+                            <div class="crew-col">
+                                <a href="https://discord.com/users/1245728609373519913" class="crew-header" target="_blank">Discord</a>
+                                <img src="https://cdn.discordapp.com/embed/avatars/3.png" alt="Discord Avatar" class="crew-avatar">
+                                <span class="crew-display">kaiqueopato32</span>
+                                <span class="crew-username">kaiqueopato32_91267</span>
+                            </div>
+                            <div class="crew-col">
+                                <a href="https://www.roblox.com/users/5409916883/profile" class="crew-header" target="_blank">Roblox</a>
+                                <img src="https://tr.rbxcdn.com/30DAY-AvatarHeadshot-CFED9DC432C04E685F951A576DFA6566-Png/150/150/AvatarHeadshot/Webp/noFilter" alt="Roblox Avatar" class="crew-avatar">
+                                <span class="crew-display">Blessed</span>
+                                <span class="crew-username">kaiqueopato32</span>
+                            </div>
+                            <div class="crew-col">
+                                <a href="https://discord.com/users/480522229843623937" class="crew-header" target="_blank">Discord</a>
+                                <img src="https://cdn.discordapp.com/avatars/480522229843623937/e123d3b618cb1129fe57a72cec44b141.webp?size=2048" alt="Discord Avatar" class="crew-avatar">
+                                <span class="crew-display">nol1122</span>
+                                <span class="crew-username">nol1122</span>
+                            </div>
+                            <div class="crew-col">
+                                <a href="https://www.roblox.com/users/5519604137/profile" class="crew-header" target="_blank">Roblox</a>
+                                <img src="https://tr.rbxcdn.com/30DAY-AvatarHeadshot-4AB14AB540445ED8CA87C584485AD27A-Png/150/150/AvatarHeadshot/Webp/noFilter" alt="Roblox Avatar" class="crew-avatar">
+                                <span class="crew-display">Nollon89a</span>
+                                <span class="crew-username">Nollon89a</span>
+                            </div>
+                            <div class="crew-col">
+                                <a href="https://discord.com/users/1109604094856941658" class="crew-header" target="_blank">Discord</a>
+                                <div class="avatar-wrap">
+                                <img src="https://cdn.discordapp.com/avatars/1109604094856941658/b1b5ce9fa1f309fbf43c068b01bf78e8.webp?size=2048" alt="Discord Avatar" class="crew-avatar">
+                                <img src="https://cdn.discordapp.com/media/v1/collectibles-shop/1341506443878072320/animated" alt="Avatar Decoration" class="avatar-decoration">
+                            </div>
+                                <span class="crew-display">Rambo</span>
+                                <span class="crew-username">beyondrambo</span>
+                            </div>
+                            <div class="crew-col">
+                                <a href="https://www.roblox.com/users/8666228168/profile" class="crew-header" target="_blank">Roblox</a>
+                                <img src="https://tr.rbxcdn.com/30DAY-AvatarHeadshot-60F7C7EB395E87E5D4925BF28071AE58-Png/150/150/AvatarHeadshot/Webp/noFilter" alt="Roblox Avatar" class="crew-avatar">
+                                <span class="crew-display">Rambo</span>
+                                <span class="crew-username">Beyondrambo</span>
+                            </div>
+                            <div class="crew-col">
+                                <a href="https://discord.com/users/422527080329379841" class="crew-header" target="_blank">Discord</a>
+                                <img src="https://cdn.discordapp.com/avatars/422527080329379841/c77189d003427d3fe038c822a8c0bcec.webp?size=2048" alt="Discord Avatar" class="crew-avatar">
+                                <span class="crew-display">Dino</span>
+                                <span class="crew-username">dinohj</span>
+                            </div>
+                            <div class="crew-col">
+                                <a href="https://www.roblox.com/users/212497067/profile" class="crew-header" target="_blank">Roblox</a>
+                                <img src="https://tr.rbxcdn.com/30DAY-AvatarHeadshot-586352BAC2E23C7DDDE09C10E5E5EDDC-Png/150/150/AvatarHeadshot/Webp/noFilter" alt="Roblox Avatar" class="crew-avatar">
+                                <span class="crew-display">Hjrc2603</span>
+                                <span class="crew-username">Hjrc2603</span>
+                            </div>
+                            <div class="crew-col">
+                                <a href="https://discord.com/users/1079951057951662111" class="crew-header" target="_blank">Discord</a>
+                                <img src="https://cdn.discordapp.com/avatars/1079951057951662111/e3a990e7a8212eca8990d44c28026b64.webp?size=2048" alt="Discord Avatar" class="crew-avatar">
+                                <span class="crew-display">leo</span>
+                                <span class="crew-username">leonardinhojr</span>
+                            </div>
+                            <div class="crew-col">
+                                <a href="https://www.roblox.com/users/1483528577/profile" class="crew-header" target="_blank">Roblox</a>
+                                <img src="https://tr.rbxcdn.com/30DAY-AvatarHeadshot-A3A15D44F2291B3A135CAFE45E3196CC-Png/150/150/AvatarHeadshot/Webp/noFilter" alt="Roblox Avatar" class="crew-avatar">
+                                <span class="crew-display">leo</span>
+                                <span class="crew-username">leopro654tq</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="template-block">
+                    <span class="template-number">4.</span>
+                    <div class="template-field-wrap">
+                        <span class="template-field">Notes:</span>
+                        <span class="template-value"><em>3 Mirage Islands, 2 Prehistoric Islands, One Kitsune Shrine. And many Teleports.</em></span>
+                    </div>
+                </div>
+                <div class="template-block">
+                    <span class="template-number">5.</span>
+                    <div class="template-field-wrap">
+                        <span class="template-field">Outcome:</span>
+                        <span class="template-value"><em>Success</em></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+<div class="log-content" id="logContent">
+            <!-- Expedition entries will appear here -->
+        </div>
+    </div>
+
     <div class="top-bar">
-        <!-- Background selector (left) -->
         <div class="bg-selector">
             <div class="bg-option bg-ocean-opt active" onclick="setBg('ocean')" title="Ocean"></div>
             <div class="bg-option bg-sunset-opt" onclick="setBg('sunset')" title="Sunset"></div>
@@ -376,8 +988,6 @@
             <div class="bg-option bg-aurora-opt" onclick="setBg('aurora')" title="Aurora"></div>
             <div class="bg-option bg-storm-opt" onclick="setBg('storm')" title="Storm"></div>
         </div>
-
-        <!-- Audio control (right) -->
         <div class="audio-control" id="audioControl" onclick="toggleAudio()">
             <span class="mute-indicator" id="muteIndicator"></span>
             <span class="audio-icon" id="audioIcon">🔇</span>
@@ -386,16 +996,15 @@
         </div>
     </div>
 
-    <!-- Audio source panel (appears below the audio control) -->
     <div class="audio-source-panel" id="audioPanel">
         <h3>🎵 Choose Audio Source</h3>
-        <p>Paste a direct MP3 URL, or use a local file name (e.g., <code>ocean.mp3</code>) if it's in the same folder as this HTML file.</p>
+        <p>Paste a direct MP3 URL, or use a local file name (e.g., <code>ocean.mp3</code>) if it's in the same folder.</p>
         <input type="text" id="audioUrlInput" placeholder="https://example.com/ocean.mp3" value="">
         <div class="btn-row">
             <button onclick="loadAudioFromInput()" class="primary">Load & Play</button>
             <button onclick="toggleAudioPanel()">Close</button>
         </div>
-        <p style="margin-top:4px;"><strong>Tip:</strong> Right-click any audio file online → "Copy link address" to get a direct URL.</p>
+        <p style="margin-top:4px;"><strong>Tip:</strong> Right-click any audio file online → "Copy link address".</p>
     </div>
 
     <div class="container">
@@ -407,46 +1016,233 @@
                 <span id="userTimezone">Detecting...</span>
             </div>
         </div>
-
         <div class="events-grid" id="eventsGrid"></div>
-
         <div class="countdown" id="countdownSection">
             <div class="countdown-label">Next event starts in</div>
             <div class="countdown-time" id="countdownTime">--:--:--</div>
         </div>
-
         <div class="footer">
             <p>Discord timestamps work in any timezone • Click timestamps to copy</p>
         </div>
     </div>
-
     <div class="wave-container"><div class="wave"></div></div>
-
     <audio id="ambientAudio" loop></audio>
 
     <script>
-        // ============================================================
-        // 🔊 INSTRUCTIONS FOR YOUR OWN MP3 FILE
-        // ============================================================
-        // 1. Place your .mp3 file in the SAME FOLDER as this HTML file.
-        // 2. Change the line below to the name of your file, for example:
-        //    const DEFAULT_AUDIO_SRC = "my-music.mp3";
-        // 3. The music will now start automatically when the user taps to enter.
-        // ============================================================
-        const DEFAULT_AUDIO_SRC = "your.mp3";   // <-- PUT YOUR FILENAME HERE (e.g., "ocean.mp3")
+        // ========== CONFIG ==========
+        const DEFAULT_AUDIO_SRC = "your.mp3";   // <-- change to your file
 
-        // ==================== ENTER OVERLAY ====================
+        // ========== EXPEDITION DATA (add yours here) ==========
+        const expeditions = [
+            // Example entry (uncomment to test):
+            // {
+            //     date: "2026-05-15",
+            //     title: "The Deep Reef Dive",
+            //     timeSpent: "4 hours 32 minutes",
+            //     crew: ["Captain Ahab", "First Mate Star", "Diver Blue"],
+            //     successful: true,
+            //     notes: "Discovered a new coral formation."
+            // }
+        ];
+
+        // ========== DOM Elements ==========
+        const ribbonContainer = document.getElementById('ribbonContainer');
+        const ribbonMenu = document.getElementById('ribbonMenu');
+        const logPaper = document.getElementById('logPaper');
+        const expeditionLogBtn = document.getElementById('expeditionLogBtn');
+        const closeLogBtn = document.getElementById('closeLogBtn');
+
+        let isMenuOpen = false;
+        let isLogOpen = false;
+        let startY = 0;
+        let isDragging = false;
+
+        // ========== Ribbon + Menu Logic ==========
+        function openMenu() {
+            if (isLogOpen) return;
+            isMenuOpen = true;
+            ribbonContainer.classList.add('open');
+            ribbonMenu.classList.add('open');
+        }
+
+        function closeMenu() {
+            isMenuOpen = false;
+            ribbonContainer.classList.remove('open');
+            ribbonMenu.classList.remove('open');
+        }
+
+        function recoilCloseMenu() {
+            ribbonContainer.style.transition = 'transform 0.12s ease';
+            ribbonContainer.style.transform = 'translateY(60px)';
+            ribbonMenu.style.transition = 'transform 0.12s ease, opacity 0.12s ease';
+            ribbonMenu.style.transform = 'translateY(10px)';
+            ribbonMenu.style.opacity = '0.7';
+
+            setTimeout(() => {
+                ribbonContainer.style.transition = 'transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                ribbonContainer.style.transform = '';
+                ribbonMenu.style.transition = 'transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease';
+                ribbonMenu.style.transform = '';
+                ribbonMenu.style.opacity = '';
+                isMenuOpen = false;
+                ribbonContainer.classList.remove('open');
+                ribbonMenu.classList.remove('open');
+                setTimeout(() => {
+                    ribbonContainer.style.transition = '';
+                    ribbonMenu.style.transition = '';
+                }, 350);
+            }, 120);
+        }
+
+        // Drag to open or recoil
+        ribbonContainer.addEventListener('mousedown', startDrag);
+        ribbonContainer.addEventListener('touchstart', startDrag, { passive: false });
+
+        function startDrag(e) {
+            isDragging = false;
+            startY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+            document.addEventListener('mousemove', onDrag);
+            document.addEventListener('mouseup', endDrag);
+            document.addEventListener('touchmove', onDrag, { passive: false });
+            document.addEventListener('touchend', endDrag);
+        }
+
+        function onDrag(e) {
+            e.preventDefault();
+            isDragging = true;
+            const currentY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+            const delta = currentY - startY;
+            if (delta > 30) {
+                if (!isMenuOpen && !isLogOpen) {
+                    openMenu();
+                } else if (isMenuOpen && !isLogOpen) {
+                    recoilCloseMenu();
+                }
+                endDrag();
+            } else if (delta < -30 && isMenuOpen && !isLogOpen) {
+                recoilCloseMenu();
+                endDrag();
+            }
+        }
+
+        function endDrag() {
+            document.removeEventListener('mousemove', onDrag);
+            document.removeEventListener('mouseup', endDrag);
+            document.removeEventListener('touchmove', onDrag);
+            document.removeEventListener('touchend', endDrag);
+            setTimeout(() => { isDragging = false; }, 50);
+        }
+
+        // Click on ribbon toggles menu (if not dragging)
+        ribbonContainer.addEventListener('click', (e) => {
+            if (!isDragging) {
+                if (isMenuOpen) closeMenu();
+                else openMenu();
+            }
+        });
+
+        // Tap anywhere else closes menu or log
+        document.addEventListener('click', (e) => {
+            if (isMenuOpen && !ribbonMenu.contains(e.target) && !ribbonContainer.contains(e.target)) {
+                closeMenu();
+            }
+            if (isLogOpen && !logPaper.contains(e.target) && !ribbonContainer.contains(e.target) && !ribbonMenu.contains(e.target)) {
+                closeLog();
+            }
+        });
+
+        // ========== Log Paper Functions ==========
+        function openLog() {
+            closeMenu();
+            isLogOpen = true;
+            logPaper.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLog() {
+            isLogOpen = false;
+            logPaper.classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        expeditionLogBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openLog();
+        });
+
+        closeLogBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeLog();
+        });
+
+        // ========== Render Expeditions ==========
+        function renderExpeditions() {
+            const container = document.getElementById('logContent');
+            if (!expeditions.length) {
+                container.innerHTML = '';  // No message when empty
+                return;
+            }
+            container.innerHTML = expeditions.map(exp => `
+                <div class="expedition-entry ${exp.successful ? 'success' : 'failed'}">
+                    <div class="expedition-date">${new Date(exp.date).toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' })}</div>
+                    <div class="expedition-title">${exp.title}</div>
+                    <div class="expedition-details">
+                        <div class="detail"><span class="detail-label">Duration</span><span class="detail-value">${exp.timeSpent}</span></div>
+                        <div class="detail"><span class="detail-label">Crew</span><span class="detail-value">${exp.crew.join(', ')}</span></div>
+                        ${exp.notes ? `<div class="detail" style="grid-column:1/-1;"><span class="detail-label">Notes</span><span class="detail-value">${exp.notes}</span></div>` : ''}
+                    </div>
+                    <span class="expedition-status ${exp.successful ? 'status-success' : 'status-failed'}">${exp.successful ? '✓ Successful' : '✗ Failed'}</span>
+                </div>
+            `).join('');
+        }
+
+        // ========== AUDIO SYSTEM ==========
+        const audioEl = document.getElementById('ambientAudio');
+        let isPlaying = false;
+        if (DEFAULT_AUDIO_SRC && DEFAULT_AUDIO_SRC !== "your.mp3") {
+            audioEl.src = DEFAULT_AUDIO_SRC;
+            audioEl.load();
+        }
+        function toggleAudio() {
+            if (!audioEl.src || audioEl.src === window.location.href) { toggleAudioPanel(); return; }
+            const control = document.getElementById('audioControl');
+            const icon = document.getElementById('audioIcon');
+            const indicator = document.getElementById('muteIndicator');
+            if (isPlaying) {
+                audioEl.pause(); isPlaying = false;
+                icon.textContent = '🔇'; control.classList.remove('playing'); indicator.classList.remove('active');
+            } else {
+                audioEl.volume = document.getElementById('volumeSlider').value / 100;
+                audioEl.play().then(() => {
+                    isPlaying = true;
+                    icon.textContent = '🔊'; control.classList.add('playing'); indicator.classList.add('active');
+                }).catch(err => alert('Could not play audio. Check URL.'));
+            }
+        }
+        function toggleAudioPanel() { document.getElementById('audioPanel').classList.toggle('open'); }
+        function loadAudioFromInput() {
+            let url = document.getElementById('audioUrlInput').value.trim();
+            if (!url) { alert('Enter a URL or filename.'); return; }
+            const finalUrl = url.match(/^https?:\/\//) ? url : url;
+            audioEl.src = finalUrl; audioEl.load();
+            audioEl.volume = document.getElementById('volumeSlider').value / 100;
+            audioEl.play().then(() => {
+                isPlaying = true;
+                document.getElementById('audioIcon').textContent = '🔊';
+                document.getElementById('audioControl').classList.add('playing');
+                document.getElementById('muteIndicator').classList.add('active');
+                document.getElementById('audioPanel').classList.remove('open');
+            }).catch(err => alert('Failed to load audio. Use a direct MP3 link.'));
+        }
+        function setVolume(val) { audioEl.volume = val / 100; }
+
+        // ========== ENTER OVERLAY ==========
         let hasEntered = false;
-
         function enterSite() {
             if (hasEntered) return;
             hasEntered = true;
-            
-            const overlay = document.getElementById('enterOverlay');
-            overlay.classList.add('hidden');
-            
-            // Start audio immediately after user gesture
-            if (DEFAULT_AUDIO_SRC) {
+            document.getElementById('enterOverlay').classList.add('hidden');
+            if (DEFAULT_AUDIO_SRC && DEFAULT_AUDIO_SRC !== "your.mp3") {
                 audioEl.src = DEFAULT_AUDIO_SRC;
                 audioEl.volume = document.getElementById('volumeSlider').value / 100;
                 audioEl.play().then(() => {
@@ -454,13 +1250,11 @@
                     document.getElementById('audioIcon').textContent = '🔊';
                     document.getElementById('audioControl').classList.add('playing');
                     document.getElementById('muteIndicator').classList.add('active');
-                }).catch(err => {
-                    console.log("Audio play failed:", err);
-                });
+                }).catch(e => console.log("Autoplay blocked, tap again"));
             }
         }
 
-        // ==================== EVENT DATA ====================
+        // ========== EVENT SCHEDULE ==========
         const events = [
             { day: "Friday", icon: "🌅", slots: [{ startUTC: "16:00", endUTC: "21:00", label: "Main Session" }] },
             { day: "Saturday", icon: "⭐", slots: [
@@ -470,200 +1264,90 @@
             { day: "Sunday", icon: "🌤️", slots: [{ startUTC: "04:30", endUTC: "06:30", label: "Early Session" }] }
         ];
 
-        // ==================== AUDIO SYSTEM ====================
-        const audioEl = document.getElementById('ambientAudio');
-        let isPlaying = false;
-
-        // Pre-load audio metadata but don't autoplay yet (browser blocks it)
-        if (DEFAULT_AUDIO_SRC) {
-            audioEl.src = DEFAULT_AUDIO_SRC;
-            audioEl.load();
-        }
-
-        function toggleAudio() {
-            // If no audio source is set, open the panel instead
-            if (!audioEl.src || audioEl.src === window.location.href) {
-                toggleAudioPanel();
-                return;
-            }
-            
-            const control = document.getElementById('audioControl');
-            const icon = document.getElementById('audioIcon');
-            const indicator = document.getElementById('muteIndicator');
-            
-            if (isPlaying) {
-                audioEl.pause();
-                isPlaying = false;
-                icon.textContent = '🔇';
-                control.classList.remove('playing');
-                indicator.classList.remove('active');
-            } else {
-                audioEl.volume = document.getElementById('volumeSlider').value / 100;
-                audioEl.play().then(() => {
-                    isPlaying = true;
-                    icon.textContent = '🔊';
-                    control.classList.add('playing');
-                    indicator.classList.add('active');
-                }).catch(err => {
-                    alert('Could not play audio. Try a different URL or check that the file exists.\n\nError: ' + err.message);
-                });
-            }
-        }
-
-        function toggleAudioPanel() {
-            const panel = document.getElementById('audioPanel');
-            panel.classList.toggle('open');
-        }
-
-        function loadAudioFromInput() {
-            const url = document.getElementById('audioUrlInput').value.trim();
-            if (!url) {
-                alert('Please enter an audio URL or filename.');
-                return;
-            }
-            
-            // Support relative paths (local files) and absolute URLs
-            const finalUrl = url.match(/^https?:\/\//) ? url : url;
-            
-            audioEl.src = finalUrl;
-            audioEl.load();
-            
-            // Auto-play after loading
-            audioEl.volume = document.getElementById('volumeSlider').value / 100;
-            audioEl.play().then(() => {
-                isPlaying = true;
-                document.getElementById('audioIcon').textContent = '🔊';
-                document.getElementById('audioControl').classList.add('playing');
-                document.getElementById('muteIndicator').classList.add('active');
-                document.getElementById('audioPanel').classList.remove('open');
-            }).catch(err => {
-                alert('Failed to load audio.\n\nMake sure:\n• The URL ends in .mp3\n• It\'s a direct link (not a download page)\n• CORS is enabled on the server\n\nError: ' + err.message);
-            });
-        }
-
-        function setVolume(val) {
-            audioEl.volume = val / 100;
-        }
-
-        // ==================== TIMEZONE CONVERSION ====================
-        function getUserTimezone() { return Intl.DateTimeFormat().resolvedOptions().timeZone; }
-
         function parseUTCTime(dayName, timeStr) {
             const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
             const targetDay = days.indexOf(dayName);
             const now = new Date();
             const currentDay = now.getUTCDay();
-            const currentHour = now.getUTCHours();
-            const currentMinute = now.getUTCMinutes();
             const [h, m] = timeStr.split(':').map(Number);
             let daysDiff = targetDay - currentDay;
             if (daysDiff < 0) daysDiff += 7;
-            if (daysDiff === 0 && (h < currentHour || (h === currentHour && m < currentMinute))) daysDiff += 7;
+            if (daysDiff === 0 && (h < now.getUTCHours() || (h === now.getUTCHours() && m < now.getUTCMinutes()))) daysDiff += 7;
             const d = new Date(now);
             d.setUTCDate(d.getUTCDate() + daysDiff);
             d.setUTCHours(h, m, 0, 0);
             return d;
         }
-
-        function formatLocalTime(date) { return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true }); }
-        function formatLocalDate(date) { return date.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' }); }
-        function getDiscordTimestamp(date, format = 'F') { return `<t:${Math.floor(date.getTime() / 1000)}:${format}>`; }
-
-        function getEventStatus(start, end) {
-            const now = new Date();
-            if (now >= start && now <= end) return 'ongoing';
-            if (now < start) return (start - now) < 3600000 ? 'soon' : 'upcoming';
-            return 'ended';
-        }
-
+        function formatLocalTime(date) { return date.toLocaleTimeString([], { hour:'numeric', minute:'2-digit', hour12:true }); }
+        function formatLocalDate(date) { return date.toLocaleDateString([], { weekday:'short', month:'short', day:'numeric' }); }
+        function getDiscordTimestamp(date, format='t') { return `<t:${Math.floor(date/1000)}:${format}>`; }
+        function getEventStatus(start, end) { const now=new Date(); if(now>=start && now<=end) return 'ongoing'; if(now<start) return (start-now)<3600000?'soon':'upcoming'; return 'ended'; }
         function getNextEvent() {
-            const now = new Date();
-            let next = null, minDiff = Infinity;
-            events.forEach(day => {
-                day.slots.forEach(slot => {
-                    const start = parseUTCTime(day.day, slot.startUTC);
-                    const diff = start - now;
-                    if (diff > 0 && diff < minDiff) { minDiff = diff; next = start; }
-                });
-            });
+            let next=null, minDiff=Infinity;
+            events.forEach(day=>day.slots.forEach(slot=>{
+                const start=parseUTCTime(day.day,slot.startUTC);
+                const diff=start-new Date();
+                if(diff>0 && diff<minDiff){ minDiff=diff; next=start; }
+            }));
             return next;
         }
-
-        // ==================== RENDER ====================
         function renderEvents() {
-            const grid = document.getElementById('eventsGrid');
-            document.getElementById('userTimezone').textContent = getUserTimezone().replace(/_/g, ' ');
-            
-            grid.innerHTML = events.map(day => {
-                const dayHasLive = day.slots.some(slot => {
-                    const s = parseUTCTime(day.day, slot.startUTC);
-                    const e = parseUTCTime(day.day, slot.endUTC);
-                    return getEventStatus(s, e) === 'ongoing';
-                });
-                const dayHasSoon = day.slots.some(slot => {
-                    const s = parseUTCTime(day.day, slot.startUTC);
-                    const e = parseUTCTime(day.day, slot.endUTC);
-                    return getEventStatus(s, e) === 'soon';
-                });
-                let badge = '';
-                if (dayHasLive) badge = '<span class="day-badge badge-live">● Live</span>';
-                else if (dayHasSoon) badge = '<span class="day-badge badge-soon">⏰ Soon</span>';
-                
-                const slotsHtml = day.slots.map(slot => {
-                    const start = parseUTCTime(day.day, slot.startUTC);
-                    const end = parseUTCTime(day.day, slot.endUTC);
-                    const status = getEventStatus(start, end);
-                    const discordTs = getDiscordTimestamp(start, 't');
-                    let statusClass = 'status-upcoming', statusText = 'Upcoming';
-                    if (status === 'ongoing') { statusClass = 'status-ongoing'; statusText = 'Live Now'; }
-                    else if (status === 'soon') { statusClass = 'status-upcoming'; statusText = 'Starting Soon'; }
-                    else if (status === 'ended') { statusClass = 'status-ended'; statusText = 'Ended'; }
-                    
-                    return `<div class="event-slot">
-                        <div><div class="slot-time">${formatLocalTime(start)} – ${formatLocalTime(end)}</div>
-                        <div class="slot-utc">${formatLocalDate(start)} • UTC ${slot.startUTC}–${slot.endUTC} • ${slot.label}</div></div>
-                        <span class="slot-status ${statusClass}">${statusText}</span>
-                        <span class="slot-discord" onclick="copyTimestamp(this, '${discordTs.replace(/'/g, "\\'")}')">${discordTs}</span>
-                    </div>`;
+            const grid=document.getElementById('eventsGrid');
+            document.getElementById('userTimezone').textContent=Intl.DateTimeFormat().resolvedOptions().timeZone.replace(/_/g,' ');
+            grid.innerHTML=events.map(day=>{
+                const dayHasLive=day.slots.some(slot=>getEventStatus(parseUTCTime(day.day,slot.startUTC),parseUTCTime(day.day,slot.endUTC))==='ongoing');
+                const dayHasSoon=day.slots.some(slot=>getEventStatus(parseUTCTime(day.day,slot.startUTC),parseUTCTime(day.day,slot.endUTC))==='soon');
+                let badge='';
+                if(dayHasLive) badge='<span class="day-badge badge-live">● Live</span>';
+                else if(dayHasSoon) badge='<span class="day-badge badge-soon">⏰ Soon</span>';
+                const slotsHtml=day.slots.map(slot=>{
+                    const start=parseUTCTime(day.day,slot.startUTC);
+                    const end=parseUTCTime(day.day,slot.endUTC);
+                    const status=getEventStatus(start,end);
+                    const discordTs=getDiscordTimestamp(start,'t');
+                    let statusClass='status-upcoming', statusText='Upcoming';
+                    if(status==='ongoing'){ statusClass='status-ongoing'; statusText='Live Now'; }
+                    else if(status==='soon'){ statusClass='status-upcoming'; statusText='Starting Soon'; }
+                    else if(status==='ended'){ statusClass='status-ended'; statusText='Ended'; }
+                    return `<div class="event-slot"><div><div class="slot-time">${formatLocalTime(start)} – ${formatLocalTime(end)}</div><div class="slot-utc">${formatLocalDate(start)} • UTC ${slot.startUTC}–${slot.endUTC} • ${slot.label}</div></div><span class="slot-status ${statusClass}">${statusText}</span><span class="slot-discord" onclick="copyTimestamp(this, '${discordTs.replace(/'/g,"\\'")}')">${discordTs}</span></div>`;
                 }).join('');
-                
-                return `<div class="day-card"><div class="day-header">
-                    <span class="day-icon">${day.icon}</span><span class="day-title">${day.day}</span>${badge}
-                </div><div class="event-slots">${slotsHtml}</div></div>`;
+                return `<div class="day-card"><div class="day-header"><span class="day-icon">${day.icon}</span><span class="day-title">${day.day}</span>${badge}</div><div class="event-slots">${slotsHtml}</div></div>`;
             }).join('');
         }
-
-        function copyTimestamp(el, ts) {
-            navigator.clipboard.writeText(ts).then(() => {
-                const original = el.textContent;
-                el.textContent = 'Copied!';
-                el.classList.add('copied');
-                setTimeout(() => { el.textContent = original; el.classList.remove('copied'); }, 1500);
-            });
-        }
-
+        function copyTimestamp(el, ts) { navigator.clipboard.writeText(ts).then(()=>{ const orig=el.textContent; el.textContent='Copied!'; el.classList.add('copied'); setTimeout(()=>{ el.textContent=orig; el.classList.remove('copied'); },1500); }); }
         function updateCountdown() {
-            const next = getNextEvent();
-            const el = document.getElementById('countdownTime');
-            if (!next) { el.textContent = "No upcoming events"; return; }
-            const diff = next - new Date();
-            const h = Math.floor(diff / 3600000);
-            const m = Math.floor((diff % 3600000) / 60000);
-            const s = Math.floor((diff % 60000) / 1000);
-            el.textContent = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+            const next=getNextEvent();
+            const el=document.getElementById('countdownTime');
+            if(!next){ el.textContent="No upcoming events"; return; }
+            const diff=next-new Date();
+            const h=Math.floor(diff/3600000), m=Math.floor((diff%3600000)/60000), s=Math.floor((diff%60000)/1000);
+            el.textContent=`${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
         }
-
         function setBg(name) {
-            document.body.className = 'bg-' + name;
-            document.querySelectorAll('.bg-option').forEach(opt => opt.classList.remove('active'));
-            document.querySelector('.bg-' + name + '-opt').classList.add('active');
+            document.body.className='bg-'+name;
+            document.querySelectorAll('.bg-option').forEach(opt=>opt.classList.remove('active'));
+            document.querySelector('.bg-'+name+'-opt').classList.add('active');
         }
 
-        // ==================== INIT ====================
+        
+        // ========== LEFT CREW TOGGLE ==========
+        function toggleLeftCrew() {
+            const grid = document.getElementById('leftCrewGrid');
+            const btn = document.getElementById('leftCrewToggle');
+            if (grid.style.display === 'none') {
+                grid.style.display = 'grid';
+                btn.style.textDecoration = 'line-through';
+            } else {
+                grid.style.display = 'none';
+                btn.style.textDecoration = 'none';
+            }
+        }
+
+// ========== INIT ==========
+        renderExpeditions();
         renderEvents();
         updateCountdown();
         setInterval(() => { renderEvents(); updateCountdown(); }, 1000);
     </script>
 </body>
-</html>
-
+</html>                                                                                                                                       </html>
