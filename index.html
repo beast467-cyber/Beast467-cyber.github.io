@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+here<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -299,7 +299,7 @@
             position: relative;
         }
         .expedition-entry::before {
-            content: '';
+            content: attr(data-expedition-id);
             position: absolute;
             top: 12px;
             left: -6px;
@@ -308,6 +308,13 @@
             background: var(--paper-bg);
             border: 2px solid #8b4513;
             border-radius: 50%;
+            font-size: 0.5rem;
+            font-weight: 800;
+            color: #8b4513;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
         }
         .expedition-entry.success::before { background: #22c55e; border-color: #16a34a; }
         .expedition-entry.failed::before { background: #ef4444; border-color: #dc2626; }
@@ -629,6 +636,7 @@
             .audio-source-panel { width: calc(100vw - 28px); right: 14px; top: 64px; }
             .log-paper { width: calc(100% - 32px); left: 16px; max-height: 85vh; }
             .log-paper.open { transform: translateY(44px); }
+            .log-header h2 { font-size: 1.15rem; }
             .ribbon-wrapper { left: 12px; }
             .ribbon-tail { width: 24px; }
             .ribbon-tail::after { border-left: 12px solid var(--ribbon-color); border-right: 12px solid var(--ribbon-color); border-bottom: 10px solid transparent; }
@@ -819,6 +827,8 @@
             font-weight: 700;
             color: #2d1b0e;
             line-height: 1.2;
+            word-break: break-word;
+            overflow-wrap: anywhere;
         }
         .crew-username {
             font-family: 'Segoe UI', system-ui, sans-serif;
@@ -826,8 +836,11 @@
             font-weight: 400;
             color: #5c2e0e;
             line-height: 1.2;
+            word-break: break-word;
+            overflow-wrap: anywhere;
         }
 
+        /* crew grid offset to align under the field label */
         .log-template-body .template-block:nth-child(3) .template-field-wrap > :not(:first-child) {
             margin-left: -30px;
             width: calc(100% + 30px);
@@ -850,9 +863,240 @@
             object-fit: contain;
             z-index: 2;
         }
+
+        /* ===== NEW LOG SEARCH & CONTROLS ===== */
+        .log-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: auto;
+            margin-right: 6px;
+        }
+        .log-action-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid #8b4513;
+            background: transparent;
+            color: #5c2e0e;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-weight: 700;
+            padding: 0;
+            line-height: 1;
+            user-select: none;
+            position: relative;
+            overflow: hidden;
+        }
+        .log-action-btn:active, .log-action-btn.pressed {
+            background: #8b4513;
+            color: var(--paper-bg);
+        }
+        #sortToggleBtn {
+            display: inline-flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            font-size: 0.75rem;
+            line-height: 1;
+        }
+        .sort-part {
+            display: inline-block;
+            position: relative;
+            width: 0.55em;
+            height: 1em;
+            transform-style: preserve-3d;
+            transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .sort-part .face {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backface-visibility: hidden;
+        }
+        .sort-part .back {
+            transform: rotateY(180deg);
+        }
+        /* Oldest first: flip both cards 180° around Y so back faces show (↓ ↑) */
+        #sortToggleBtn.sort-oldest .sort-part {
+            transform: rotateY(180deg);
+        }
+
+        .log-search-bar {
+            padding: 6px 24px 10px;
+            background: transparent;
+            display: none;
+        }
+        .log-search-bar.active {
+            display: block;
+        }
+        .log-search-bar input {
+            width: 100%;
+            padding: 2px 0;
+            border: none;
+            background: transparent;
+            color: #2d1b0e;
+            font-family: 'Great Vibes', cursive;
+            font-size: 1.35rem;
+            outline: none;
+            caret-color: #8b4513;
+        }
+
+        /* Collapsed expedition minimal box */
+        .expedition-entry.collapsed {
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+        .expedition-entry.collapsed .log-template-body,
+        .expedition-entry.collapsed .template-block,
+        .expedition-entry.collapsed .crew-grid,
+        .expedition-entry.collapsed .left-crew-toggle,
+        .expedition-entry.collapsed .left-crew-grid {
+            display: none !important;
+        }
+        .expedition-entry.collapsed .expedition-date {
+            margin-bottom: 0;
+            flex: 1;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            color: #8b4513;
+            font-weight: 600;
+        }
+        .expedition-entry.collapsed .expedition-status {
+            margin-top: 0;
+        }
+        .expedition-entry.collapsed::before {
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        /* Header area of expanded entries is clickable to collapse */
+        .expedition-entry:not(.collapsed) .template-block:first-child {
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background 0.15s ease;
+        }
+        .expedition-entry:not(.collapsed) .template-block:first-child:hover {
+            background: rgba(139, 69, 19, 0.08);
+        }
+        .expedition-entry:not(.collapsed) .template-block:first-child .template-value {
+            cursor: default;
+        }
+
+        /* Crew search boxes */
+        .crew-search-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 16px;
+            padding: 4px 0;
+        }
+        .crew-search-box {
+            background: rgba(139, 69, 19, 0.08);
+            border: 1px solid rgba(139, 69, 19, 0.2);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s;
+        }
+        .crew-search-box:hover {
+            background: rgba(139, 69, 19, 0.15);
+            transform: translateY(-2px);
+        }
+        .crew-search-number {
+            position: absolute;
+            top: 8px;
+            right: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            color: #8b4513;
+            font-weight: 700;
+        }
+        .crew-search-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #8b4513;
+            margin-bottom: 8px;
+            background: #f5e6c8;
+        }
+        .crew-search-display {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #2d1b0e;
+            display: block;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+        }
+        .crew-search-username {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-size: 0.8rem;
+            color: #5c2e0e;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+        }
+        .crew-search-box .highlight,
+        .expedition-entry .highlight {
+            background: #ffd966;
+            border-radius: 2px;
+            padding: 0 2px;
+        }
+
+        /* Highlights */
+        .flash-highlight {
+            animation: flashHighlight 1s ease-out;
+        }
+        @keyframes flashHighlight {
+            0% { background: rgba(255, 255, 200, 0.8); }
+            100% { background: transparent; }
+        }
+        .crew-highlight {
+            background: #ffd966 !important;
+            border-radius: 3px;
+            padding: 0 2px;
+            transition: background 0.3s;
+        }
+
+        @media (max-width: 600px) {
+            .log-action-btn {
+                width: 28px;
+                height: 28px;
+                font-size: 0.75rem;
+            }
+            .log-header-actions {
+                gap: 4px;
+                margin-right: 4px;
+            }
+            .log-search-bar {
+                padding: 6px 16px 10px;
+            }
+            .crew-search-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+            .crew-search-avatar {
+                width: 56px;
+                height: 56px;
+            }
+        }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
     <base target="_blank">
+<base target="_blank">
 </head>
 <body class="bg-ocean">
 
@@ -882,9 +1126,19 @@
         <div class="log-header">
             <button class="log-close" id="closeLogBtn">✕</button>
             <h2>Expedition Log</h2>
-            <button class="log-minimize" id="logMinimizeBtn" title="Toggle size">⤢</button>
+            <div class="log-header-actions">
+                <button class="log-action-btn" id="searchToggleBtn" title="Search">&#x2315;</button>
+                <button class="log-action-btn" id="sortToggleBtn" title="Sort: newest first">
+                    <span class="sort-part up"><span class="face front">↑</span><span class="face back">↓</span></span><span class="sort-part down"><span class="face front">↓</span><span class="face back">↑</span></span>
+                </button>
+                <button class="log-action-btn" id="collapseToggleBtn" title="Collapse all">&#x229F;</button>
+            </div>
+            <button class="log-minimize" id="logMinimizeBtn" title="Toggle size">&#x2922;</button>
         </div>
-        <div class="log-template">
+        <div class="log-search-bar" id="logSearchBar">
+            <input type="text" id="logSearchInput" autocomplete="off" autocorrect="off" spellcheck="false">
+        </div>
+        <div class="log-template" id="staticLogTemplate">
             <div class="log-template-body">
                 <div class="template-block"><span class="template-number">1.</span><div class="template-field-wrap"><span class="template-field">Date:</span><span class="template-value"><em>May 16, 2026 - 9:35 PM</em></span></div></div>
                 <div class="template-block"><span class="template-number">2.</span><div class="template-field-wrap"><span class="template-field">Time Spent:</span><span class="template-value"><em>2 hours 21 minutes</em></span></div></div>
@@ -901,7 +1155,7 @@
                         <div class="crew-col"><a href="https://discord.com/users/1158134373925785650" class="crew-header" target="_blank">Discord</a><img src="https://cdn.discordapp.com/embed/avatars/0.png" class="crew-avatar"><span class="crew-display">ᡕᠵデ气亠</span><span class="crew-username">someone20771</span></div>
                         <div class="crew-col"><a href="https://www.roblox.com/users/3480921898/profile" class="crew-header" target="_blank">Roblox</a><img src="https://tr.rbxcdn.com/30DAY-AvatarHeadshot-30D9E761B53C46684E76E4CE5FD45602-Png/150/150/AvatarHeadshot/Webp/noFilter" class="crew-avatar"><span class="crew-display">DualAkimboAK47km</span><span class="crew-username">Pop_Cat09283</span></div>
                     </div>
-                    <button id="leftCrewToggle" style="margin-top:12px;padding:8px 16px;background:rgba(139,69,19,0.1);border:1px dashed #8b4513;border-radius:8px;color:#5c2e0e;font-family:'Georgia',serif;font-size:0.95rem;cursor:pointer;width:100%;transition:background 0.2s;" onclick="toggleLeftCrew()">Left Crew Members</button>
+                    <button id="leftCrewToggle" style="margin-top:12px;padding:8px 16px;background:rgba(139,69,19,0.1);border:1px dashed #8b4513;border-radius:8px;color:#5c2e0e;font-family:'Georgia',serif;font-size:0.95rem;cursor:pointer;width:100%;transition:background 0.2s;" onclick="toggleLeftCrew(this)">Left Crew Members</button>
                     <div class="crew-grid" id="leftCrewGrid" style="display:none;">
                         <div class="crew-col"><a href="https://discord.com/users/806607585943486534" class="crew-header" target="_blank">Discord</a><img src="https://cdn.discordapp.com/avatars/806607585943486534/62e72e2366f2f97518856692f7288964.webp?size=2048" class="crew-avatar"><span class="crew-display">emoji3x</span><span class="crew-username">emoji3x</span></div>
                         <div class="crew-col"><a href="https://www.roblox.com/users/348787247/profile" class="crew-header" target="_blank">Roblox</a><img src="https://tr.rbxcdn.com/30DAY-AvatarHeadshot-C100B3D61ED0A961149E06B52C9EA83B-Png/150/150/AvatarHeadshot/Webp/noFilter" class="crew-avatar"><span class="crew-display">tooemo</span><span class="crew-username">tooemo</span></div>
@@ -974,8 +1228,7 @@
 
     <script>
         // ========== CONFIG ==========
-        const DEFAULT_AUDIO_SRC = "https://files.catbox.moe/mttzfu.mp3";
-        const expeditions = [];
+        const DEFAULT_AUDIO_SRC = "your.mp3";
 
         // ========== DOM Elements ==========
         const ribbonContainer = document.getElementById('ribbonContainer');
@@ -1075,20 +1328,35 @@
         expeditionLogBtn.addEventListener('click', (e) => { e.stopPropagation(); openLog(); });
         closeLogBtn.addEventListener('click', (e) => { e.stopPropagation(); closeLog(); });
 
-        function renderExpeditions() { document.getElementById('logContent').innerHTML = ''; }
-
-        // ========== LEFT CREW TOGGLE (original, working) ==========
-        window.toggleLeftCrew = function() {
-            const grid = document.getElementById('leftCrewGrid');
-            const btn = document.getElementById('leftCrewToggle');
-            if (grid.style.display === 'none' || getComputedStyle(grid).display === 'none') {
+        // ========== LEFT CREW TOGGLE (updated for dynamic + static) ==========
+        window.toggleLeftCrew = function(btn) {
+            let grid, button;
+            if (btn && btn.closest) {
+                button = btn;
+                const entry = btn.closest('.expedition-entry') || btn.closest('.log-template');
+                if (entry) {
+                    grid = entry.querySelector('.left-crew-grid') || entry.querySelector('#leftCrewGrid');
+                }
+            }
+            if (!grid) {
+                grid = document.getElementById('leftCrewGrid');
+                button = document.getElementById('leftCrewToggle');
+            }
+            if (!grid) return;
+            
+            const isHidden = grid.style.display === 'none' || getComputedStyle(grid).display === 'none';
+            if (isHidden) {
                 grid.style.display = 'grid';
-                btn.style.textDecoration = 'line-through';
-                btn.style.background = 'rgba(139,69,19,0.2)';
+                if (button) {
+                    button.style.textDecoration = 'line-through';
+                    button.style.background = 'rgba(139,69,19,0.2)';
+                }
             } else {
                 grid.style.display = 'none';
-                btn.style.textDecoration = 'none';
-                btn.style.background = 'rgba(139,69,19,0.1)';
+                if (button) {
+                    button.style.textDecoration = 'none';
+                    button.style.background = 'rgba(139,69,19,0.1)';
+                }
             }
         };
 
@@ -1174,8 +1442,8 @@
         function formatLocalTime(date) { return date.toLocaleTimeString([], { hour:'numeric', minute:'2-digit', hour12:true }); }
         function formatLocalDate(date) { return date.toLocaleDateString([], { weekday:'short', month:'short', day:'numeric' }); }
         function getDiscordTimestamp(date) { return `<t:${Math.floor(date/1000)}:t>`; }
-        function getEventStatus(start, end) { const now=new Date(); if(now>=start && now<=end) return 'ongoing'; if(now<start) return (start-now)<3600000?'soon':'upcoming'; return 'ended'; }
-        function getNextEvent() { let next=null, minDiff=Infinity; events.forEach(day=>day.slots.forEach(slot=>{ const start=parseUTCTime(day.day,slot.startUTC); const diff=start-new Date(); if(diff>0 && diff<minDiff){ minDiff=diff; next=start; } })); return next; }
+        function getEventStatus(start, end) { const now=new Date(); if(now>=start && now<=end) return 'ongoing'; if(now<<start) return (start-now)<3600000?'soon':'upcoming'; return 'ended'; }
+        function getNextEvent() { let next=null, minDiff=Infinity; events.forEach(day=>day.slots.forEach(slot=>{ const start=parseUTCTime(day.day,slot.startUTC); const diff=start-new Date(); if(diff>0 && diff<<minDiff){ minDiff=diff; next=start; } })); return next; }
         function renderEvents() {
             const grid=document.getElementById('eventsGrid');
             document.getElementById('userTimezone').textContent=Intl.DateTimeFormat().resolvedOptions().timeZone.replace(/_/g,' ');
@@ -1196,6 +1464,646 @@
         window.copyTimestamp = function(el, ts) { navigator.clipboard.writeText(ts).then(()=>{ const orig=el.textContent; el.textContent='Copied!'; el.classList.add('copied'); setTimeout(()=>{ el.textContent=orig; el.classList.remove('copied'); },1500); }); };
         function updateCountdown() { const next=getNextEvent(); const el=document.getElementById('countdownTime'); if(!next){ el.textContent="No upcoming events"; return; } const diff=next-new Date(); const h=Math.floor(diff/3600000), m=Math.floor((diff%3600000)/60000), s=Math.floor((diff%60000)/1000); el.textContent=`${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`; }
         window.setBg = function(name) { document.body.className='bg-'+name; document.querySelectorAll('.bg-option').forEach(opt=>opt.classList.remove('active')); document.querySelector('.bg-'+name+'-opt').classList.add('active'); };
+
+        // ========== EXPEDITION LOG SEARCH SYSTEM ==========
+        (function() {
+            let expeditionsData = [];
+            let searchQuery = '';
+            let sortOrder = 'newest';
+            let globalCollapse = false;
+            let searchTimer = null;
+            let ignoreNextScroll = false;
+            let activeCrewHighlight = null;
+
+            const logContent = document.getElementById('logContent');
+            // Event delegation for expand / collapse
+            logContent.addEventListener('click', (e) => {
+                // ── Expand a collapsed entry ──
+                const collapsed = e.target.closest('.expedition-entry.collapsed');
+                if (collapsed) {
+                    e.stopPropagation();
+                    const expId = parseInt(collapsed.dataset.expeditionId);
+                    const exp = expeditionsData.find(e => e.id === expId);
+                    if (!exp) return;
+                    collapsed.classList.remove('collapsed');
+                    collapsed.innerHTML = renderExpandedExpedition(exp);
+                    return;
+                }
+
+                // ── Collapse an expanded entry from its header area ──
+                const expanded = e.target.closest('.expedition-entry:not(.collapsed)');
+                if (!expanded) return;
+
+                const firstBlock = expanded.querySelector('.template-block');
+                if (!firstBlock || !firstBlock.contains(e.target)) return;
+
+                // Ignore clicks on the actual date value text
+                if (e.target.closest('.template-value')) return;
+
+                e.stopPropagation();
+                const expId = parseInt(expanded.dataset.expeditionId);
+                const exp = expeditionsData.find(e => e.id === expId);
+                if (!exp) return;
+                expanded.classList.add('collapsed');
+                expanded.innerHTML = `
+                    <div class="expedition-date">${exp.dateStr}</div>
+                    <div class="expedition-status status-${exp.outcome}">${exp.outcome === 'success' ? 'Success' : 'Failed'}</div>
+                `;
+            });
+            const staticTemplate = document.getElementById('staticLogTemplate');
+            const searchBar = document.getElementById('logSearchBar');
+            const searchInput = document.getElementById('logSearchInput');
+            const searchToggleBtn = document.getElementById('searchToggleBtn');
+            const sortToggleBtn = document.getElementById('sortToggleBtn');
+            const collapseToggleBtn = document.getElementById('collapseToggleBtn');
+
+            // Parse static HTML into dynamic data
+            function parseExpeditions() {
+                if (!staticTemplate) return;
+                const body = staticTemplate.querySelector('.log-template-body');
+                if (!body) return;
+
+                let dateStr = '', timeSpent = '', notes = '', outcome = 'success';
+                
+                body.querySelectorAll('.template-block').forEach(block => {
+                    const field = block.querySelector('.template-field');
+                    const value = block.querySelector('.template-value');
+                    if (!field || !value) return;
+                    const label = field.textContent.trim().toLowerCase();
+                    const valText = value.textContent.trim();
+                    if (label.includes('date')) dateStr = valText;
+                    else if (label.includes('time')) timeSpent = valText;
+                    else if (label.includes('notes')) notes = valText;
+                    else if (label.includes('outcome')) outcome = valText.toLowerCase();
+                });
+
+                // Parse date "May 16, 2026 - 9:35 PM"
+                let date = new Date();
+                const dateMatch = dateStr.match(/([A-Za-z]+)\s+(\d{1,2}),\s+(\d{4})\s*[-–]\s*(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+                if (dateMatch) {
+                    const monthNames = ['january','february','march','april','may','june','july','august','september','october','november','december'];
+                    const month = monthNames.findIndex(m => m.toLowerCase().startsWith(dateMatch[1].toLowerCase()));
+                    const day = parseInt(dateMatch[2]);
+                    const year = parseInt(dateMatch[3]);
+                    let hour = parseInt(dateMatch[4]);
+                    const minute = parseInt(dateMatch[5]);
+                    const ampm = dateMatch[6].toUpperCase();
+                    if (ampm === 'PM' && hour !== 12) hour += 12;
+                    if (ampm === 'AM' && hour === 12) hour = 0;
+                    if (month >= 0) date = new Date(year, month, day, hour, minute);
+                }
+
+                // Parse crew members
+                const crewMembers = [];
+                staticTemplate.querySelectorAll('.crew-grid').forEach(grid => {
+                    const isLeft = grid.id === 'leftCrewGrid' || grid.classList.contains('left-crew-grid');
+                    grid.querySelectorAll('.crew-col').forEach(col => {
+                        const link = col.querySelector('.crew-header');
+                        const avatarImg = col.querySelector('.crew-avatar');
+                        const display = col.querySelector('.crew-display');
+                        const user = col.querySelector('.crew-username');
+                        const deco = col.querySelector('.avatar-decoration');
+                        
+                        crewMembers.push({
+                            platform: link ? link.textContent.trim() : '',
+                            profileUrl: link ? link.href : '',
+                            avatar: avatarImg ? avatarImg.src : '',
+                            decoration: deco ? deco.src : '',
+                            displayName: display ? display.textContent.trim() : '',
+                            username: user ? user.textContent.trim() : '',
+                            isLeft: isLeft
+                        });
+                    });
+                });
+
+                expeditionsData = [{
+                    id: 1,
+                    date: date,
+                    dateStr: dateStr,
+                    timeSpent: timeSpent,
+                    crewMembers: crewMembers,
+                    notes: notes,
+                    outcome: outcome.includes('success') ? 'success' : 'failed'
+                }];
+              
+                expeditionsData.push({
+    id: 2,
+    date: new Date(2026, 4, 18, 15, 4),
+    dateStr: 'May 18, 2026 - 3:04 PM',
+    timeSpent: '10 minutes',
+    crewMembers: [
+        { platform: 'Discord', profileUrl: 'https://discord.com/users/774239108235001867', avatar: 'https://cdn.discordapp.com/avatars/774239108235001867/e3f2b08c5b5468629f5f2ad24a554235.webp?size=2048', decoration: '', displayName: 'demir', username: 'demoyey', isLeft: false },
+        { platform: 'Roblox',  profileUrl: 'https://www.roblox.com/users/1482369241/profile', avatar: 'https://tr.rbxcdn.com/30DAY-AvatarHeadshot-81E490FCE4D4E38274B2F52CC1FA19EC-Png/150/150/AvatarHeadshot/Webp/noFilter', decoration: '', displayName: 'Demo_Yey', username: 'Demir930', isLeft: false },
+
+        { platform: 'Discord', profileUrl: 'https://discord.com/users/416738747279867904', avatar: 'https://cdn.discordapp.com/avatars/416738747279867904/e108f3de0d1a13920399e7dad3fa19fc.webp?size=2048', decoration: '', displayName: 'PoorBooster', username: 'poorbooster', isLeft: false },
+        { platform: 'Roblox',  profileUrl: 'https://www.roblox.com/users/10864320784/profile', avatar: 'https://tr.rbxcdn.com/30DAY-AvatarHeadshot-93C35B24EDE79A325F25860DE792F47D-Png/150/150/AvatarHeadshot/Webp/noFilter', decoration: '', displayName: 'fghibban', username: 'fghibban', isLeft: false },
+
+        { platform: 'Discord', profileUrl: 'https://discord.com/users/950745002353524777', avatar: 'https://cdn.discordapp.com/avatars/950745002353524777/f708c5ff7aa67ed567842bec83f08d2b.webp?size=2048', decoration: 'https://cdn.discordapp.com/media/v1/collectibles-shop/1144308439720394944/animated', displayName: '𝐌𝖎𝖓𝖙𝖘𝖚', username: 'mintsu714', isLeft: false },
+        { platform: 'Roblox',  profileUrl: 'https://www.roblox.com/users/1185774969/profile', avatar: 'https://tr.rbxcdn.com/30DAY-AvatarHeadshot-5E8A6DCCAE0ED160E1E1977F28398017-Png/150/150/AvatarHeadshot/Webp/noFilter', decoration: '', displayName: 'Samakmit_Mintsu', username: 'glich714', isLeft: false },
+
+        { platform: 'Discord', profileUrl: 'https://discord.com/users/1421144795576799283', avatar: 'https://cdn.discordapp.com/avatars/1421144795576799283/e0d498a89d49031aa6240a4205cc2bda.webp?size=2048', decoration: '', displayName: 'Hardik', username: 'hard1k.1o', isLeft: false },
+        { platform: 'Roblox',  profileUrl: 'https://www.roblox.com/users/7815225055/profile', avatar: 'https://tr.rbxcdn.com/30DAY-AvatarHeadshot-6E18AA4E2D7E3407BE5A60DD77F14176-Png/150/150/AvatarHeadshot/Webp/noFilter', decoration: '', displayName: 'hridaysahu70', username: 'hridaysahu70', isLeft: false },
+
+        { platform: 'Discord', profileUrl: 'https://discord.com/users/1244391356856799298', avatar: 'https://cdn.discordapp.com/avatars/1244391356856799298/8f9a5df91828b602fd01766a25f4a25a.webp?size=2048', decoration: '', displayName: 'EL1T3 1KxPs', username: 'el1t31kxps', isLeft: false },
+        { platform: 'Roblox',  profileUrl: 'https://www.roblox.com/users/7163492485/profile', avatar: 'https://tr.rbxcdn.com/30DAY-AvatarHeadshot-A7BBCB1293568DDFF384CD047769710E-Png/150/150/AvatarHeadshot/Webp/noFilter', decoration: '', displayName: 'rip_EL1T31KxPs', username: 'rip_EL1T31KxPs', isLeft: false }
+    ],
+    notes: 'Really Lucky but, I wasnt there',
+    outcome: 'success'
+});
+
+                staticTemplate.style.display = 'none';
+                renderLog();
+            }
+
+            // Search classification
+            function classifyQuery(query) {
+                const terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+                const result = { dateTerms: [], crewTerms: [], outcomeTerms: [], raw: query };
+                const monthNames = /^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i;
+                
+                terms.forEach(term => {
+                    if (/^success|^failed|^succ|^fail|^suc|^fai/i.test(term)) {
+                        result.outcomeTerms.push(term);
+                    } else if (/\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}/.test(term) || /^\d{1,2}$/.test(term) || /^\d{4}$/.test(term) || monthNames.test(term) || /(am|pm)$/i.test(term) || /^\d{1,2}:\d{2}/.test(term) || term === '-' || term === '–') {
+                        result.dateTerms.push(term);
+                    } else {
+                        result.crewTerms.push(term);
+                    }
+                });
+                return result;
+            }
+
+            function dateMatches(exp, terms) {
+                if (!terms.length) return true;
+                const d = exp.date;
+                const pad = n => n.toString().padStart(2, '0');
+                const checks = [
+                    exp.dateStr.toLowerCase(),
+                    `${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}`,
+                    `${d.getMonth()+1}/${d.getDate()}/${d.getFullYear().toString().slice(2)}`,
+                    `${pad(d.getMonth()+1)}/${pad(d.getDate())}/${d.getFullYear()}`,
+                    `${pad(d.getMonth()+1)}/${pad(d.getDate())}/${d.getFullYear().toString().slice(2)}`,
+                    d.toLocaleDateString('en-US').toLowerCase(),
+                    d.toLocaleDateString('en-GB').toLowerCase(),
+                    d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit', hour12:true}).toLowerCase().replace(/\s/g,''),
+                    d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit', hour12:false}).toLowerCase().replace(/\s/g,''),
+                    (d.getMonth()+1).toString(),
+                    pad(d.getMonth()+1),
+                    d.getDate().toString(),
+                    pad(d.getDate()),
+                    d.getFullYear().toString(),
+                    d.getFullYear().toString().slice(2),
+                    d.toLocaleString('en-US', { month: 'long' }).toLowerCase(),
+                    d.toLocaleString('en-US', { month: 'short' }).toLowerCase()
+                ];
+                return terms.every(term => checks.some(c => c.includes(term)));
+            }
+
+            function crewMatches(exp, terms, mode = 'all') {
+                if (!terms.length) return true;
+                return exp.crewMembers.some(cm => {
+                    const names = (cm.displayName + ' ' + cm.username).toLowerCase();
+                    if (mode === 'all') {
+                        return terms.every(term => names.includes(term));
+                    } else {
+                        return terms.some(term => names.includes(term));
+                    }
+                });
+            }
+
+            function outcomeMatches(exp, terms) {
+                if (!terms.length) return true;
+                return terms.some(term => exp.outcome.toLowerCase().includes(term.toLowerCase()));
+            }
+
+            function expeditionMatches(exp, classified) {
+                return dateMatches(exp, classified.dateTerms) &&
+                       crewMatches(exp, classified.crewTerms, 'all') &&
+                       outcomeMatches(exp, classified.outcomeTerms);
+            }
+
+            function getMatchingCrewMembers(classified, mode = 'all') {
+                const matches = [];
+                expeditionsData.forEach((exp, idx) => {
+                    exp.crewMembers.forEach(cm => {
+                        const names = (cm.displayName + ' ' + cm.username).toLowerCase();
+                        let isMatch;
+                        if (mode === 'all') {
+                            isMatch = classified.crewTerms.every(term => names.includes(term));
+                        } else {
+                            isMatch = classified.crewTerms.some(term => names.includes(term));
+                        }
+                        if (isMatch) {
+                            matches.push({ ...cm, expeditionId: exp.id, expeditionIndex: idx });
+                        }
+                    });
+                });
+                return matches;
+            }
+
+            function renderLog() {
+                ignoreNextScroll = true; // ignore scroll events from DOM rebuild
+                setTimeout(() => { ignoreNextScroll = false; }, 300);
+                if (!logContent) return;
+                const classified = classifyQuery(searchQuery);
+                const hasQuery = searchQuery.trim().length > 0;
+                const hasDate = classified.dateTerms.length > 0;
+                const hasCrew = classified.crewTerms.length > 0;
+                const hasOutcome = classified.outcomeTerms.length > 0;
+                const crewMatchesAny = hasCrew ? getMatchingCrewMembers(classified, 'any') : [];
+
+                // Multiple crew mode - hide logs, show boxes
+                if (hasCrew && !hasDate && !hasOutcome && crewMatchesAny.length > 1) {
+                    renderCrewBoxes(crewMatchesAny, classified);
+                    return;
+                }
+
+                // Normal log mode
+                let displayList = [...expeditionsData];
+                
+                // Sort
+                if (hasOutcome && !hasDate && !hasCrew) {
+                    displayList.sort((a, b) => {
+                        const aMatch = outcomeMatches(a, classified.outcomeTerms);
+                        const bMatch = outcomeMatches(b, classified.outcomeTerms);
+                        if (aMatch && !bMatch) return -1;
+                        if (!aMatch && bMatch) return 1;
+                        return sortOrder === 'newest' ? b.date - a.date : a.date - b.date;
+                    });
+                } else {
+                    displayList.sort((a, b) => sortOrder === 'newest' ? b.date - a.date : a.date - b.date);
+                }
+
+                // Determine expanded
+                let expandedIds = new Set();
+                if (!hasQuery) {
+                    if (!globalCollapse) displayList.forEach(exp => expandedIds.add(exp.id));
+                } else {
+                    const matching = displayList.filter(exp => expeditionMatches(exp, classified));
+                    if (matching.length > 0) {
+                        if (hasOutcome && !hasDate && !hasCrew) {
+                            // Outcome only: all collapsed, just reorder
+                        } else if ((hasDate && hasCrew) || (hasDate && hasOutcome) || (hasCrew && hasOutcome)) {
+                            // Combined terms: expand only first match
+                            expandedIds.add(matching[0].id);
+                        } else {
+                            // Single term: expand all matches
+                            matching.forEach(exp => expandedIds.add(exp.id));
+                        }
+                    }
+                }
+
+                logContent.innerHTML = '';
+                displayList.forEach((exp) => {
+                    const isExpanded = expandedIds.has(exp.id);
+                    const entry = document.createElement('div');
+                    entry.className = 'expedition-entry' + (isExpanded ? '' : ' collapsed');
+                    entry.dataset.expeditionId = exp.id;
+                    
+                    if (isExpanded) {
+                        entry.innerHTML = renderExpandedExpedition(exp);
+                    } else {
+                        entry.innerHTML = `
+                            <div class="expedition-date">${exp.dateStr}</div>
+                            <div class="expedition-status status-${exp.outcome}">${exp.outcome === 'success' ? 'Success' : 'Failed'}</div>
+                        `;
+                    }
+                    
+                    /* click handling is done via event delegation on logContent */
+                    
+                    logContent.appendChild(entry);
+                });
+
+                if (displayList.length === 0) {
+                    logContent.innerHTML = '<div class="log-empty">No expeditions match your search.</div>';
+                }
+
+                // Apply post-render effects
+                applySearchEffects(displayList, classified, hasDate, hasCrew, hasOutcome, crewMatchesAny);
+            }
+
+            function renderExpandedExpedition(exp) {
+                const crewActive = exp.crewMembers.filter(cm => !cm.isLeft);
+                const crewLeft = exp.crewMembers.filter(cm => cm.isLeft);
+                
+                let crewHtml = '<div class="crew-grid">';
+                crewActive.forEach(cm => {
+                    crewHtml += renderCrewCol(cm);
+                });
+                crewHtml += '</div>';
+                
+                if (crewLeft.length > 0) {
+                    crewHtml += `<button class="left-crew-toggle" style="margin-top:12px;padding:8px 16px;background:rgba(139,69,19,0.1);border:1px dashed #8b4513;border-radius:8px;color:#5c2e0e;font-family:'Georgia',serif;font-size:0.95rem;cursor:pointer;width:100%;transition:background 0.2s;" onclick="toggleLeftCrew(this)">Left Crew Members</button>`;
+                    crewHtml += `<div class="crew-grid left-crew-grid" style="display:none;">`;
+                    crewLeft.forEach(cm => {
+                        crewHtml += renderCrewCol(cm);
+                    });
+                    crewHtml += '</div>';
+                }
+
+                return `
+                    <div class="log-template-body">
+                        <div class="template-block"><span class="template-number">1.</span><div class="template-field-wrap"><span class="template-field">Date:</span><span class="template-value"><em>${exp.dateStr}</em></span></div></div>
+                        <div class="template-block"><span class="template-number">2.</span><div class="template-field-wrap"><span class="template-field">Time Spent:</span><span class="template-value"><em>${exp.timeSpent}</em></span></div></div>
+                        <div class="template-block"><span class="template-number">3.</span><div class="template-field-wrap"><span class="template-field">Crew Members:</span>${crewHtml}</div></div>
+                        <div class="template-block"><span class="template-number">4.</span><div class="template-field-wrap"><span class="template-field">Notes:</span><span class="template-value"><em>${exp.notes}</em></span></div></div>
+                        <div class="template-block"><span class="template-number">5.</span><div class="template-field-wrap"><span class="template-field">Outcome:</span><span class="template-value"><em>${exp.outcome === 'success' ? 'Success' : 'Failed'}</em></span></div></div>
+                    </div>
+                `;
+            }
+
+            function renderCrewCol(cm) {
+                const decoHtml = cm.decoration ? `<img src="${cm.decoration}" class="avatar-decoration">` : '';
+                return `
+                    <div class="crew-col" data-username="${cm.username}">
+                        <a href="${cm.profileUrl}" class="crew-header" target="_blank">${cm.platform}</a>
+                        <div class="avatar-wrap">
+                            <img src="${cm.avatar}" class="crew-avatar" onerror="this.style.opacity=0.5">
+                            ${decoHtml}
+                        </div>
+                        <span class="crew-display">${cm.displayName}</span>
+                        <span class="crew-username">${cm.username}</span>
+                    </div>
+                `;
+            }
+
+            function renderCrewBoxes(matchingCrew, classified) {
+                if (!logContent) return;
+                logContent.innerHTML = '<div class="crew-search-grid">' +
+                    matchingCrew.map((cm, idx) => {
+                        const expIndex = expeditionsData.findIndex(e => e.id === cm.expeditionId);
+                        const number = expIndex >= 0 ? `#${expIndex + 1}` : '';
+                        const displayHighlighted = highlightText(cm.displayName, classified.crewTerms);
+                        const usernameHighlighted = highlightText(cm.username, classified.crewTerms);
+                        return `
+                            <div class="crew-search-box" data-expedition-id="${cm.expeditionId}" data-crew-username="${cm.username}">
+                                <span class="crew-search-number">${number}</span>
+                                <img class="crew-search-avatar" src="${cm.avatar}" onerror="this.style.opacity=0.5">
+                                <span class="crew-search-display">${displayHighlighted}</span>
+                                <span class="crew-search-username">${usernameHighlighted}</span>
+                            </div>
+                        `;
+                    }).join('') +
+                    '</div>';
+
+                logContent.querySelectorAll('.crew-search-box').forEach(box => {
+                    box.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const expId = parseInt(box.dataset.expeditionId);
+                        const username = box.dataset.crewUsername;
+                        revealExpeditionAndCrew(expId, username);
+                    });
+                });
+            }
+
+            function highlightText(text, terms) {
+                if (!terms.length) return text;
+                let result = text;
+                terms.forEach(term => {
+                    const regex = new RegExp(`(${escapeRegex(term)})`, 'gi');
+                    result = result.replace(regex, '<span class="highlight">$1</span>');
+                });
+                return result;
+            }
+
+            function escapeRegex(str) {
+                return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            }
+
+            function applySearchEffects(displayList, classified, hasDate, hasCrew, hasOutcome, matchingCrew) {
+                if (!searchQuery.trim()) return;
+
+                const matchingExps = displayList.filter(exp => expeditionMatches(exp, classified));
+                if (matchingExps.length === 0) return;
+
+                // Flash highlight matching logs
+                let flashDuration = 0;
+                if (hasDate && !hasCrew && !hasOutcome) flashDuration = 1000;
+                else if (hasDate && hasCrew && !hasOutcome) flashDuration = 500;
+                else if (hasDate && !hasCrew && hasOutcome) flashDuration = 1000;
+                else if (!hasDate && hasCrew && hasOutcome) flashDuration = 500;
+
+                if (flashDuration > 0) {
+                    matchingExps.forEach(exp => {
+                        const el = document.querySelector(`.expedition-entry[data-expedition-id="${exp.id}"]`);
+                        if (el) {
+                            el.classList.add('flash-highlight');
+                            setTimeout(() => el.classList.remove('flash-highlight'), flashDuration);
+                        }
+                    });
+                }
+
+                // Scroll to first matching log's date field
+                const firstMatch = matchingExps[0];
+                const firstEl = document.querySelector(`.expedition-entry[data-expedition-id="${firstMatch.id}"]`);
+                if (firstEl) {
+                    setTimeout(() => {
+                        const dateBlock = firstEl.querySelector('.template-block');
+                        if (dateBlock) {
+                            scrollToElementInLog(dateBlock);
+                        } else {
+                            scrollToElementInLog(firstEl);
+                        }
+                    }, 100);
+                }
+
+                // Scroll to crew member
+                if (hasCrew && matchingCrew.length > 0) {
+                    const target = matchingCrew[0];
+                    setTimeout(() => {
+                        highlightCrewMember(target.expeditionId, target.username);
+                    }, flashDuration > 0 ? flashDuration + 200 : 300);
+                }
+            }
+
+            function scrollToElementInLog(el) {
+                const logPaperEl = document.getElementById('logPaper');
+                if (!logPaperEl || !el) return;
+                const header = logPaperEl.querySelector('.log-header');
+                const headerHeight = header ? header.offsetHeight : 0;
+                const logRect = logPaperEl.getBoundingClientRect();
+                const elRect = el.getBoundingClientRect();
+                const scrollTop = logPaperEl.scrollTop + (elRect.top - logRect.top) - headerHeight - 8;
+                ignoreNextScroll = true;
+                logPaperEl.scrollTo({ top: Math.max(0, scrollTop), behavior: 'smooth' });
+                setTimeout(() => { ignoreNextScroll = false; }, 3000);
+            }
+
+            function highlightCrewMember(expeditionId, username) {
+                ignoreNextScroll = true; // prevent scroll events from layout changes
+                const expEntry = document.querySelector(`.expedition-entry[data-expedition-id="${expeditionId}"]`);
+                if (!expEntry) return;
+
+                const crewCol = expEntry.querySelector(`.crew-col[data-username="${username}"]`);
+                if (!crewCol) return;
+
+                const isInLeft = crewCol.closest('.left-crew-grid') !== null;
+                if (isInLeft) {
+                    const leftGrid = expEntry.querySelector('.left-crew-grid');
+                    const toggleBtn = expEntry.querySelector('.left-crew-toggle');
+                    if (leftGrid && leftGrid.style.display === 'none') {
+                        leftGrid.style.display = 'grid';
+                        if (toggleBtn) {
+                            toggleBtn.style.textDecoration = 'line-through';
+                            toggleBtn.style.background = 'rgba(139,69,19,0.2)';
+                        }
+                    }
+                }
+
+                setTimeout(() => {
+                    scrollToElementInLog(crewCol);
+                    
+                    const nameEl = crewCol.querySelector('.crew-display') || crewCol.querySelector('.crew-username');
+                    if (nameEl) {
+                        nameEl.classList.add('crew-highlight');
+                        activeCrewHighlight = nameEl;
+                    }
+                }, 100);
+            }
+
+            function revealExpeditionAndCrew(expeditionId, username) {
+                // Clear search
+                searchInput.value = '';
+                searchQuery = '';
+                searchBar.classList.remove('active');
+                renderLog();
+                
+                // Collapse all except target
+                document.querySelectorAll('.expedition-entry').forEach(entry => {
+                    if (parseInt(entry.dataset.expeditionId) !== expeditionId) {
+                        entry.classList.add('collapsed');
+                        const exp = expeditionsData.find(e => e.id === parseInt(entry.dataset.expeditionId));
+                        if (exp) {
+                            entry.innerHTML = `
+                                <div class="expedition-date">${exp.dateStr}</div>
+                                <div class="expedition-status status-${exp.outcome}">${exp.outcome === 'success' ? 'Success' : 'Failed'}</div>
+                            `;
+                        }
+                    }
+                });
+                
+                // Expand target
+                const targetEntry = document.querySelector(`.expedition-entry[data-expedition-id="${expeditionId}"]`);
+                if (!targetEntry) return;
+                targetEntry.classList.remove('collapsed');
+                targetEntry.innerHTML = renderExpandedExpedition(expeditionsData.find(e => e.id === expeditionId));
+                
+                // Click listeners already bound by renderLog(); no need to re-bind
+                
+                // Flash highlight
+                targetEntry.classList.add('flash-highlight');
+                setTimeout(() => targetEntry.classList.remove('flash-highlight'), 500);
+                
+                // Highlight crew
+                setTimeout(() => {
+                    highlightCrewMember(expeditionId, username);
+                }, 600);
+            }
+
+            // Auto-jump after 2 seconds or Enter
+            function attemptAutoJump() {
+                const classified = classifyQuery(searchInput.value);
+                if (classified.crewTerms.length > 0 && classified.dateTerms.length === 0 && classified.outcomeTerms.length === 0) {
+                    const matches = getMatchingCrewMembers(classified, 'all');
+                    if (matches.length === 1) {
+                        const target = matches[0];
+                        const expEntry = document.querySelector(`.expedition-entry[data-expedition-id="${target.expeditionId}"]`);
+                        if (expEntry) {
+                            expEntry.classList.add('flash-highlight');
+                            setTimeout(() => expEntry.classList.remove('flash-highlight'), 500);
+                        }
+                        setTimeout(() => {
+                            highlightCrewMember(target.expeditionId, target.username);
+                        }, 600);
+                    }
+                }
+            }
+
+            searchInput.addEventListener('input', (e) => {
+                searchQuery = e.target.value;
+                renderLog();
+                
+                // Clear existing highlights
+                document.querySelectorAll('.crew-highlight').forEach(el => el.classList.remove('crew-highlight'));
+                activeCrewHighlight = null;
+                
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(attemptAutoJump, 2000);
+            });
+
+            searchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    clearTimeout(searchTimer);
+                    attemptAutoJump();
+                }
+            });
+
+            // Toggle search
+            searchToggleBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isActive = searchBar.classList.toggle('active');
+                if (isActive) {
+                    searchInput.focus();
+                } else {
+                    searchInput.value = '';
+                    searchQuery = '';
+                    renderLog();
+                }
+            });
+
+            // Toggle sort
+            sortToggleBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                sortOrder = sortOrder === 'newest' ? 'oldest' : 'newest';
+                sortToggleBtn.title = sortOrder === 'newest' ? 'Sort: newest first' : 'Sort: oldest first';
+                if (sortOrder === 'oldest') {
+                    sortToggleBtn.classList.add('sort-oldest');
+                } else {
+                    sortToggleBtn.classList.remove('sort-oldest');
+                }
+                flashButton(sortToggleBtn);
+                renderLog();
+            });
+
+            // Toggle collapse
+            collapseToggleBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                globalCollapse = !globalCollapse;
+                collapseToggleBtn.title = globalCollapse ? 'Expand all' : 'Collapse all';
+                collapseToggleBtn.innerHTML = globalCollapse ? '&#x229E;' : '&#x229F;';
+                flashButton(collapseToggleBtn);
+                renderLog();
+            });
+
+            function flashButton(btn) {
+                btn.classList.add('pressed');
+                setTimeout(() => btn.classList.remove('pressed'), 200);
+            }
+
+            // Remove highlights on interaction
+            function removeHighlightsOnInteraction() {
+                if (ignoreNextScroll) return;
+                if (activeCrewHighlight) {
+                    activeCrewHighlight.classList.remove('crew-highlight');
+                    activeCrewHighlight = null;
+                }
+            }
+            
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.crew-search-box')) {
+                    removeHighlightsOnInteraction();
+                }
+            });
+            document.addEventListener('touchstart', removeHighlightsOnInteraction, { passive: true });
+            window.addEventListener('scroll', removeHighlightsOnInteraction, { passive: true });
+            document.getElementById('logPaper').addEventListener('scroll', removeHighlightsOnInteraction, { passive: true });
+
+            // Override global renderExpeditions so the bottom call works
+            window.renderExpeditions = renderLog;
+
+            // Initialize
+            parseExpeditions();
+        })();
 
         renderExpeditions(); renderEvents(); updateCountdown(); setInterval(() => { renderEvents(); updateCountdown(); }, 1000);
         autoExpand();
