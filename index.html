@@ -1093,9 +1093,81 @@
                 height: 56px;
             }
         }
-    </style>
+
+        /* ===== EXPEDITION LOG LOCAL TIME CONVERSION (isolated) ===== */
+        @keyframes expeditionSparkleGlow {
+            0% { text-shadow: 0 0 0px rgba(139, 69, 19, 0); }
+            25% { text-shadow: 0 0 6px rgba(139, 69, 19, 0.4), 0 0 12px rgba(194, 140, 80, 0.3); }
+            50% { text-shadow: 0 0 10px rgba(139, 69, 19, 0.6), 0 0 20px rgba(194, 140, 80, 0.5), 0 0 30px rgba(194, 140, 80, 0.2); }
+            75% { text-shadow: 0 0 6px rgba(139, 69, 19, 0.4), 0 0 12px rgba(194, 140, 80, 0.3); }
+            100% { text-shadow: 0 0 0px rgba(139, 69, 19, 0); }
+        }
+        .expedition-time-converting {
+            animation: expeditionSparkleGlow 1.5s ease-in-out;
+            color: #5c2e0e;
+            font-weight: 700;
+        }
+        .expedition-reverse-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            margin-left: 6px;
+            font-size: 13px;
+            line-height: 1;
+            cursor: pointer;
+            opacity: 0.5;
+            transition: all 0.25s ease;
+            color: #8b4513;
+            vertical-align: middle;
+            border-radius: 50%;
+            user-select: none;
+        }
+        .expedition-reverse-icon:hover {
+            opacity: 1;
+            background: rgba(139, 69, 19, 0.12);
+            transform: rotate(-180deg);
+        }
+        .expedition-converted-time {
+            display: inline;
+        }
+    
+        /* ===== DIGIT ROLL ANIMATION ===== */
+        .digit-roll-wrap {
+            display: inline-block;
+            overflow: hidden;
+            height: 1.4em;
+            line-height: 1.4em;
+            vertical-align: bottom;
+            position: relative;
+        }
+        .digit-roll-strip {
+            display: flex;
+            flex-direction: column;
+            transform: translateY(0);
+        }
+        .digit-roll-strip > span {
+            display: block;
+            height: 1.4em;
+            line-height: 1.4em;
+        }
+        @keyframes fadeInChar {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .fade-in-char {
+            animation: fadeInChar 0.6s ease forwards;
+            opacity: 0;
+        }
+</style>
     <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
     <base target="_blank">
+<base target="_blank">
+<base target="_blank">
+<base target="_blank">
+<base target="_blank">
+<base target="_blank">
 <base target="_blank">
 </head>
 <body class="bg-ocean">
@@ -1311,7 +1383,7 @@
             else if (delta < -30 && isMenuOpen && !isLogOpen) { recoilCloseMenu(); endDrag(); }
         }
         function endDrag() {
-            document.removeEventListener('mousemove', onDrag);
+                    document.removeEventListener('mousemove', onDrag);
             document.removeEventListener('mouseup', endDrag);
             document.removeEventListener('touchmove', onDrag);
             document.removeEventListener('touchend', endDrag);
@@ -1401,6 +1473,8 @@
             if (hasEntered) return;
             hasEntered = true;
             document.getElementById('enterOverlay').classList.add('hidden');
+            // Unlock digit-roll audio context during user gesture
+            if (window.DigitRollAudio) window.DigitRollAudio.ensureReady();
             // Try to play the default audio file
             if (DEFAULT_AUDIO_SRC && DEFAULT_AUDIO_SRC !== "your.mp3") { // only if user has replaced it with a real file
                 audioEl.src = DEFAULT_AUDIO_SRC;
@@ -1414,7 +1488,7 @@
                     console.warn("Autoplay failed:", err);
                     alert("Could not play your.mp3 – make sure the file exists in the same folder as this page.\n\nYou can also use the 🎵 panel to paste a direct audio link.");
                 });
-            } else if (DEFAULT_AUDIO_SRC === "https://files.catbox.moe/mttzfu.mp3") {
+            } else if (DEFAULT_AUDIO_SRC === "your.mp3") {
                 // default placeholder – suggest using the audio panel
                 console.log("No custom audio file set. Use the audio panel to load music.");
             }
@@ -1467,7 +1541,7 @@
 
         // ========== EXPEDITION LOG SEARCH SYSTEM ==========
         (function() {
-            let expeditionsData = [];
+            window.expeditionsData = [];
             let searchQuery = '';
             let sortOrder = 'newest';
             let globalCollapse = false;
@@ -1505,8 +1579,9 @@
                 const exp = expeditionsData.find(e => e.id === expId);
                 if (!exp) return;
                 expanded.classList.add('collapsed');
+                const displayDate = exp.localDateStr || exp.dateStr;
                 expanded.innerHTML = `
-                    <div class="expedition-date">${exp.dateStr}</div>
+                    <div class="expedition-date">${displayDate}</div>
                     <div class="expedition-status status-${exp.outcome}">${exp.outcome === 'success' ? 'Success' : 'Failed'}</div>
                 `;
             });
@@ -1580,6 +1655,8 @@
                     id: 1,
                     date: date,
                     dateStr: dateStr,
+                    localDateStr: null,
+                    converted: false,
                     timeSpent: timeSpent,
                     crewMembers: crewMembers,
                     notes: notes,
@@ -1590,6 +1667,8 @@
     id: 2,
     date: new Date(2026, 4, 18, 15, 4),
     dateStr: 'May 18, 2026 - 3:04 PM',
+    localDateStr: null,
+    converted: false,
     timeSpent: '10 minutes',
     crewMembers: [
         { platform: 'Discord', profileUrl: 'https://discord.com/users/774239108235001867', avatar: 'https://cdn.discordapp.com/avatars/774239108235001867/e3f2b08c5b5468629f5f2ad24a554235.webp?size=2048', decoration: '', displayName: 'demir', username: 'demoyey', isLeft: false },
@@ -1760,11 +1839,12 @@
                     entry.className = 'expedition-entry' + (isExpanded ? '' : ' collapsed');
                     entry.dataset.expeditionId = exp.id;
                     
+                    const displayDate = exp.localDateStr || exp.dateStr;
                     if (isExpanded) {
                         entry.innerHTML = renderExpandedExpedition(exp);
                     } else {
                         entry.innerHTML = `
-                            <div class="expedition-date">${exp.dateStr}</div>
+                            <div class="expedition-date">${displayDate}</div>
                             <div class="expedition-status status-${exp.outcome}">${exp.outcome === 'success' ? 'Success' : 'Failed'}</div>
                         `;
                     }
@@ -1785,13 +1865,13 @@
             function renderExpandedExpedition(exp) {
                 const crewActive = exp.crewMembers.filter(cm => !cm.isLeft);
                 const crewLeft = exp.crewMembers.filter(cm => cm.isLeft);
-                
+
                 let crewHtml = '<div class="crew-grid">';
                 crewActive.forEach(cm => {
                     crewHtml += renderCrewCol(cm);
                 });
                 crewHtml += '</div>';
-                
+
                 if (crewLeft.length > 0) {
                     crewHtml += `<button class="left-crew-toggle" style="margin-top:12px;padding:8px 16px;background:rgba(139,69,19,0.1);border:1px dashed #8b4513;border-radius:8px;color:#5c2e0e;font-family:'Georgia',serif;font-size:0.95rem;cursor:pointer;width:100%;transition:background 0.2s;" onclick="toggleLeftCrew(this)">Left Crew Members</button>`;
                     crewHtml += `<div class="crew-grid left-crew-grid" style="display:none;">`;
@@ -1801,9 +1881,11 @@
                     crewHtml += '</div>';
                 }
 
+                const dateDisplay = exp.localDateStr || exp.dateStr;
+
                 return `
                     <div class="log-template-body">
-                        <div class="template-block"><span class="template-number">1.</span><div class="template-field-wrap"><span class="template-field">Date:</span><span class="template-value"><em>${exp.dateStr}</em></span></div></div>
+                        <div class="template-block"><span class="template-number">1.</span><div class="template-field-wrap"><span class="template-field">Date:</span><span class="template-value"><em>${dateDisplay}</em></span></div></div>
                         <div class="template-block"><span class="template-number">2.</span><div class="template-field-wrap"><span class="template-field">Time Spent:</span><span class="template-value"><em>${exp.timeSpent}</em></span></div></div>
                         <div class="template-block"><span class="template-number">3.</span><div class="template-field-wrap"><span class="template-field">Crew Members:</span>${crewHtml}</div></div>
                         <div class="template-block"><span class="template-number">4.</span><div class="template-field-wrap"><span class="template-field">Notes:</span><span class="template-value"><em>${exp.notes}</em></span></div></div>
@@ -1974,8 +2056,9 @@
                         entry.classList.add('collapsed');
                         const exp = expeditionsData.find(e => e.id === parseInt(entry.dataset.expeditionId));
                         if (exp) {
+                            const d = exp.localDateStr || exp.dateStr;
                             entry.innerHTML = `
-                                <div class="expedition-date">${exp.dateStr}</div>
+                                <div class="expedition-date">${d}</div>
                                 <div class="expedition-status status-${exp.outcome}">${exp.outcome === 'success' ? 'Success' : 'Failed'}</div>
                             `;
                         }
@@ -2107,6 +2190,433 @@
 
         renderExpeditions(); renderEvents(); updateCountdown(); setInterval(() => { renderEvents(); updateCountdown(); }, 1000);
         autoExpand();
-    </script>
-</body>
-    </html>
+
+        // ========== EXPEDITION LOG LOCAL TIME CONVERSION (isolated) ==========
+        (function() {
+            'use strict';
+            const LOG_CONTENT = document.getElementById('logContent');
+            const LOG_PAPER = document.getElementById('logPaper');
+            if (!LOG_CONTENT || !LOG_PAPER) return;
+
+            const convertTimers = new Map();   // expeditionId -> timeoutId
+            const hasConverted = new Set();    // expeditionIds that have already converted
+            let checkScheduled = false;
+
+            function parseDateStr(str) {
+                const match = str.match(/([A-Za-z]+)\s+(\d{1,2}),\s*(\d{4})\s*[-–]\s*(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+                if (!match) return null;
+                const months = ['january','february','march','april','may','june','july','august','september','october','november','december'];
+                const monthIdx = months.findIndex(m => m.toLowerCase().startsWith(match[1].toLowerCase()));
+                if (monthIdx === -1) return null;
+                const day = parseInt(match[2]);
+                const year = parseInt(match[3]);
+                let hour = parseInt(match[4]);
+                const minute = parseInt(match[5]);
+                const ampm = match[6].toUpperCase();
+                if (ampm === 'PM' && hour !== 12) hour += 12;
+                if (ampm === 'AM' && hour === 12) hour = 0;
+                return new Date(Date.UTC(year, monthIdx, day, hour, minute));
+            }
+
+            function formatLocalDate(date) {
+                const datePart = date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+                const timePart = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+                return `${datePart} - ${timePart}`;
+            }
+
+            function addSparkles(targetEl) {
+                const rect = targetEl.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                for (let i = 0; i < 14; i++) {
+                    const sparkle = document.createElement('div');
+                    const size = 3 + Math.random() * 5;
+                    sparkle.style.cssText = `
+                        position: fixed; left: ${centerX}px; top: ${centerY}px;
+                        width: ${size}px; height: ${size}px;
+                        background: radial-gradient(circle, #fff 0%, #ffd700 40%, #ff8c00 100%);
+                        border-radius: 50%; pointer-events: none; z-index: 10000;
+                        box-shadow: 0 0 8px #ffd700, 0 0 16px #ffaa00;
+                    `;
+                    const angle = (Math.PI * 2 * i) / 14 + (Math.random() - 0.5) * 0.5;
+                    const distance = 40 + Math.random() * 70;
+                    const tx = Math.cos(angle) * distance;
+                    const ty = Math.sin(angle) * distance;
+                    const rot = Math.random() * 720 - 360;
+                    sparkle.animate([
+                        { transform: 'translate(0,0) scale(1) rotate(0deg)', opacity: 1 },
+                        { transform: `translate(${tx}px, ${ty}px) scale(0) rotate(${rot}deg)`, opacity: 0 }
+                    ], {
+                        duration: 900 + Math.random() * 500,
+                        easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                        fill: 'forwards'
+                    });
+                    document.body.appendChild(sparkle);
+                    setTimeout(() => sparkle.remove(), 1400);
+                }
+                // Play sparkle chime once per conversion
+                if (window.DigitRollAudio) window.DigitRollAudio.playSparkle();
+            }
+
+            function createDigitRoll(oldDigit, newDigit) {
+                const wrap = document.createElement('span');
+                wrap.className = 'digit-roll-wrap';
+
+                const strip = document.createElement('span');
+                strip.className = 'digit-roll-strip';
+
+                const oldVal = parseInt(oldDigit);
+                const newVal = parseInt(newDigit);
+
+                if (oldVal === newVal) {
+                    const span = document.createElement('span');
+                    span.textContent = newVal;
+                    strip.appendChild(span);
+                    wrap.appendChild(strip);
+                    return wrap;
+                }
+
+                const CYCLES = 2;
+                const reels = [];
+                const goingDown = newVal < oldVal;
+                let totalSteps;
+                let startOffset;
+                let endOffset;
+
+                if (goingDown) {
+                    const landSteps = ((oldVal - newVal + 10) % 10) + 1;
+                    totalSteps = CYCLES * 10 + landSteps;
+                    let d = newVal;
+                    for (let i = 0; i < totalSteps; i++) {
+                        reels.push(d);
+                        d = (d + 1) % 10;
+                    }
+                    startOffset = -(totalSteps - 1) * 1.4;
+                    endOffset = 0;
+                } else {
+                    const landSteps = ((newVal - oldVal + 10) % 10) + 1;
+                    totalSteps = CYCLES * 10 + landSteps;
+                    let d = oldVal;
+                    for (let i = 0; i < totalSteps; i++) {
+                        reels.push(d);
+                        d = (d + 1) % 10;
+                    }
+                    startOffset = 0;
+                    endOffset = -(totalSteps - 1) * 1.4;
+                }
+
+                reels.forEach(d => {
+                    const span = document.createElement('span');
+                    span.textContent = d;
+                    strip.appendChild(span);
+                });
+
+                wrap.appendChild(strip);
+
+                strip.animate([
+                    { transform: `translateY(${startOffset}em)` },
+                    { transform: `translateY(${endOffset}em)` }
+                ], {
+                    duration: 1400,
+                    easing: 'cubic-bezier(0.15, 0.9, 0.3, 1.05)',
+                    fill: 'forwards'
+                });
+
+                // Schedule one click per digit flip in the reel
+                const changeCount = reels.length - 1;
+                if (changeCount > 0) {
+                    const MIN_GAP = 180;
+                    const DURATION = 1400;
+                    const idealInterval = DURATION / changeCount;
+
+                    DigitRollAudio.ensureReady();
+
+                    if (idealInterval >= MIN_GAP) {
+                        // Enough time between each change — play every flip
+                        for (let i = 1; i <= changeCount; i++) {
+                            const delayMs = DURATION * i / changeCount;
+                            setTimeout(() => DigitRollAudio.playClick(), delayMs);
+                        }
+                    } else {
+                        // Too many changes for the duration — cap at MIN_GAP and distribute
+                        const maxClicks = Math.floor(DURATION / MIN_GAP);
+                        const step = Math.max(1, Math.ceil(changeCount / maxClicks));
+                        for (let i = step; i <= changeCount; i += step) {
+                            const delayMs = DURATION * i / changeCount;
+                            setTimeout(() => DigitRollAudio.playClick(), delayMs);
+                        }
+                    }
+                }
+
+                return wrap;
+            }
+
+            /* ===== DIGIT ROLL AUDIO ===== */
+            const DigitRollAudio = {
+                pool: [],
+                poolSize: 4,
+                ready: false,
+                src: 'https://files.catbox.moe/128uah.mp3',
+
+                init() {
+                    if (this.ready) return;
+                    for (let i = 0; i < this.poolSize; i++) {
+                        const a = new Audio(this.src);
+                        a.preload = 'auto';
+                        this.pool.push(a);
+                    }
+                    this.ready = true;
+                },
+
+                playClick() {
+                    if (!this.ready) this.init();
+                    const audio = this.pool.find(a => a.paused || a.ended) || this.pool[0];
+                    audio.currentTime = 0;
+                    audio.play().catch(() => {});
+                },
+
+                ensureReady() {
+                    this.init();
+                },
+
+                playSparkle() {
+                    if (!this.sparklePool) {
+                        this.sparklePool = [];
+                        for (let i = 0; i < 3; i++) {
+                            const a = new Audio('https://files.catbox.moe/lq0kos.mp3');
+                            a.preload = 'auto';
+                            this.sparklePool.push(a);
+                        }
+                    }
+                    const audio = this.sparklePool.find(a => a.paused || a.ended) || this.sparklePool[0];
+                    audio.currentTime = 0;
+                    audio.play().catch(() => {});
+                }
+            };
+
+            function animateTextTransition(element, oldStr, newStr) {
+                let firstDiff = 0;
+                const minLen = Math.min(oldStr.length, newStr.length);
+                while (firstDiff < minLen && oldStr[firstDiff] === newStr[firstDiff]) {
+                    firstDiff++;
+                }
+
+                let lastDiffOld = oldStr.length - 1;
+                let lastDiffNew = newStr.length - 1;
+                while (lastDiffOld >= firstDiff && lastDiffNew >= firstDiff && oldStr[lastDiffOld] === newStr[lastDiffNew]) {
+                    lastDiffOld--;
+                    lastDiffNew--;
+                }
+
+                const prefix = newStr.substring(0, firstDiff);
+                const suffix = newStr.substring(lastDiffNew + 1);
+                const oldMiddle = oldStr.substring(firstDiff, lastDiffOld + 1);
+                const newMiddle = newStr.substring(firstDiff, lastDiffNew + 1);
+
+                const container = document.createElement('span');
+
+                if (prefix) {
+                    const prefixSpan = document.createElement('span');
+                    prefixSpan.textContent = prefix;
+                    container.appendChild(prefixSpan);
+                }
+
+                if (oldMiddle.length === newMiddle.length && oldMiddle.length > 0) {
+                    for (let i = 0; i < oldMiddle.length; i++) {
+                        if (oldMiddle[i] === newMiddle[i]) {
+                            const span = document.createElement('span');
+                            span.textContent = newMiddle[i];
+                            container.appendChild(span);
+                        } else if (/\d/.test(oldMiddle[i]) && /\d/.test(newMiddle[i])) {
+                            container.appendChild(createDigitRoll(oldMiddle[i], newMiddle[i]));
+                        } else {
+                            const span = document.createElement('span');
+                            span.textContent = newMiddle[i];
+                            span.className = 'fade-in-char';
+                            container.appendChild(span);
+                        }
+                    }
+                } else if (newMiddle.length > 0) {
+                    const span = document.createElement('span');
+                    span.textContent = newMiddle;
+                    span.className = 'fade-in-char';
+                    container.appendChild(span);
+                }
+
+                if (suffix) {
+                    const suffixSpan = document.createElement('span');
+                    suffixSpan.textContent = suffix;
+                    container.appendChild(suffixSpan);
+                }
+
+                element.innerHTML = '';
+                element.appendChild(container);
+
+
+                setTimeout(() => {
+                    element.textContent = newStr;
+                }, 1400);
+            }
+
+            window.convertExpeditionDate = function(expId) {
+                if (hasConverted.has(expId)) return;
+                const exp = window.expeditionsData.find(e => e.id === expId);
+                if (!exp) return;
+
+                const parsed = parseDateStr(exp.dateStr);
+                if (!parsed) return;
+
+                exp.localDateStr = formatLocalDate(parsed);
+                exp.converted = true;
+                hasConverted.add(expId);
+
+                const entry = document.querySelector(`.expedition-entry[data-expedition-id="${expId}"]`);
+                if (!entry) return;
+
+                if (entry.classList.contains('collapsed')) {
+                    const dateEl = entry.querySelector('.expedition-date');
+                    if (dateEl) {
+                        const oldText = dateEl.textContent.trim();
+                        dateEl.innerHTML = '<span class="expedition-converted-time expedition-time-converting"></span>';
+                        const innerSpan = dateEl.querySelector('.expedition-converted-time');
+                        animateTextTransition(innerSpan, oldText, exp.localDateStr);
+                        addSparkles(dateEl);
+                        setTimeout(() => {
+                            innerSpan.classList.remove('expedition-time-converting');
+                        }, 1500);
+                    }
+                } else {
+                    const dateValueEl = entry.querySelector('.template-block:first-child .template-value');
+                    if (dateValueEl) {
+                        const oldText = dateValueEl.textContent.trim();
+                        dateValueEl.classList.add('expedition-time-converting');
+                        animateTextTransition(dateValueEl, oldText, exp.localDateStr);
+                        addSparkles(dateValueEl);
+                        setTimeout(() => {
+                            dateValueEl.classList.remove('expedition-time-converting');
+                        }, 1500);
+                    }
+                }
+            };
+
+            // Check if the DATE element within an entry is actually visible on screen
+            function isDateVisible(entryEl) {
+                const dateEl = entryEl.querySelector('.expedition-date') ||
+                               entryEl.querySelector('.template-block:first-child .template-value');
+                if (!dateEl) return false;
+
+                const rect = dateEl.getBoundingClientRect();
+                const logRect = LOG_PAPER.getBoundingClientRect();
+                const header = LOG_PAPER.querySelector('.log-header');
+                const headerRect = header ? header.getBoundingClientRect() : null;
+
+                // Must be within the browser viewport
+                const inViewport = rect.top < window.innerHeight && rect.bottom > 0 &&
+                                   rect.left < window.innerWidth && rect.right > 0;
+                // Must be within the visible area of the log paper (below sticky header, above bottom)
+                const visibleTop = headerRect ? headerRect.bottom : logRect.top;
+                const inLogPaper = rect.top < logRect.bottom && rect.bottom > visibleTop;
+                // Must have actual size
+                const hasSize = rect.width > 0 && rect.height > 0;
+
+                return inViewport && inLogPaper && hasSize;
+            }
+
+            // Unified check: start or cancel 2.5 s timers for every unconverted entry
+            function checkAllEntries() {
+                if (!LOG_PAPER.classList.contains('open')) return;
+
+                LOG_CONTENT.querySelectorAll('.expedition-entry').forEach(entry => {
+                    const expId = parseInt(entry.dataset.expeditionId);
+                    if (!expId || hasConverted.has(expId)) return;
+
+                    const visible = isDateVisible(entry);
+                    const hasTimer = convertTimers.has(expId);
+
+                    if (visible && !hasTimer) {
+                        const timer = setTimeout(() => {
+                            const entryNow = document.querySelector(`.expedition-entry[data-expedition-id="${expId}"]`);
+                            if (entryNow && isDateVisible(entryNow)) {
+                                window.convertExpeditionDate(expId);
+                            }
+                            convertTimers.delete(expId);
+                        }, 2500);
+                        convertTimers.set(expId, timer);
+                    } else if (!visible && hasTimer) {
+                        clearTimeout(convertTimers.get(expId));
+                        convertTimers.delete(expId);
+                    }
+                });
+            }
+
+            function scheduleCheck() {
+                if (checkScheduled) return;
+                checkScheduled = true;
+                requestAnimationFrame(() => {
+                    checkScheduled = false;
+                    checkAllEntries();
+                });
+            }
+
+            // IntersectionObserver — coarse trigger; real work is done by scheduleCheck
+            const observer = new IntersectionObserver(() => {
+                scheduleCheck();
+            }, {
+                root: null,
+                threshold: 0
+            });
+
+            // Scroll inside the log paper
+            LOG_PAPER.addEventListener('scroll', () => {
+                scheduleCheck();
+            }, { passive: true });
+
+            function observeAllEntries() {
+                LOG_CONTENT.querySelectorAll('.expedition-entry').forEach(entry => {
+                    const expId = parseInt(entry.dataset.expeditionId);
+                    if (expId && !hasConverted.has(expId)) {
+                        observer.observe(entry);
+                    }
+                });
+                // Give CSS transitions (open/close, expand/collapse) a tick to settle
+                setTimeout(() => scheduleCheck(), 50);
+            }
+
+            // When log opens, start observing immediately
+            const logOpenObserver = new MutationObserver(() => {
+                if (LOG_PAPER.classList.contains('open')) {
+                    observeAllEntries();
+                    // The log-paper CSS transition is ~400ms. The initial 50 ms check in
+                    // observeAllEntries() often runs while the sheet is still sliding down,
+                    // so the date rects are above the viewport. Force a re-check right after
+                    // the transition finishes so entries already in view start their 2.5 s
+                    // timer immediately.
+                    const postTransitionCheck = () => {
+                        checkAllEntries();
+                    };
+                    LOG_PAPER.addEventListener('transitionend', postTransitionCheck, { once: true });
+                    setTimeout(() => {
+                        LOG_PAPER.removeEventListener('transitionend', postTransitionCheck);
+                        checkAllEntries();
+                    }, 500);
+                } else {
+                    // Log closed: cancel pending timers, but keep hasConverted so they stay converted
+                    convertTimers.forEach(t => clearTimeout(t));
+                    convertTimers.clear();
+                }
+            });
+            logOpenObserver.observe(LOG_PAPER, { attributes: true, attributeFilter: ['class'] });
+
+            // Watch for new entries added to logContent
+            const entryMutObs = new MutationObserver(() => {
+                observeAllEntries();
+            });
+            entryMutObs.observe(LOG_CONTENT, { childList: true, subtree: true });
+
+            // If already open on load, observe now
+            if (LOG_PAPER.classList.contains('open')) {
+                observeAllEntries();
+            }
+        window.DigitRollAudio = DigitRollAudio;
+        })();   </script>
+</body>                                                                                                                                                                                                                                                                                                                                </html>
